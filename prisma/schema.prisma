@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String   // bcrypt hashed
+  walletAddress String?  // Algorand wallet address — added after Pera connect
+  createdAt     DateTime @default(now())
+  dealsAsSeller Deal[]   @relation("SellerDeals")
+}
+
+model Deal {
+  id              String      @id @default(cuid())  // becomes the URL slug
+  sellerId        String
+  seller          User        @relation("SellerDeals", fields: [sellerId], references: [id])
+  buyerEmail      String      // buyer may not have account when deal is created
+  buyerWallet     String      // buyer's Algorand wallet address
+  itemName        String
+  itemDescription String?
+  amountUSDC      Int         // in whole dollars
+  deliveryDays    Int
+  disputeWindowDays Int
+  status          DealStatus  @default(PROPOSED)
+  contractAppId   String?     // Algorand application ID
+  contractAddress String?     // Algorand application address
+  trackingId      String?     // plain text tracking number
+  courier         String?     // courier code e.g. "dhl"
+  trackingHash    String?     // SHA256 of tracking number — stored on-chain
+  deliveredAt     DateTime?   // when TrackingMore confirms delivery
+  createdAt       DateTime    @default(now())
+  evidence        Evidence[]
+  arbitration     Arbitration?
+}
+
+enum DealStatus {
+  PROPOSED
+  ACCEPTED
+  FUNDED
+  DELIVERED
+  COMPLETED
+  DISPUTED
+  RESOLVED
+  CANCELLED
+}
+
+model Evidence {
+  id          String   @id @default(cuid())
+  dealId      String
+  deal        Deal     @relation(fields: [dealId], references: [id])
+  submittedBy String   // "seller" or "buyer"
+  description String
+  photoUrls   String[] // Cloudinary URLs
+  createdAt   DateTime @default(now())
+}
+
+model Arbitration {
+  id            String   @id @default(cuid())
+  dealId        String   @unique
+  deal          Deal     @relation(fields: [dealId], references: [id])
+  arbitratorId  String   // platform arbitrator user ID
+  sellerPct     Int      // percentage to seller e.g. 80
+  buyerPct      Int      // percentage to buyer e.g. 20
+  notes         String?
+  resolvedAt    DateTime @default(now())
+}
