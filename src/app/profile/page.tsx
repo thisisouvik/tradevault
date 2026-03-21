@@ -134,7 +134,7 @@ export default async function ProfilePage() {
               </div>
               <p className="text-sm text-[#6B7280] mb-1 font-medium">No wallet connected</p>
               <p className="text-xs text-[#9CA3AF] mb-4">
-                Connect your Pera or Defly wallet to sign contracts and track your on-chain reputation.
+                Connect your Lute or Defly wallet to sign contracts and track your on-chain reputation.
               </p>
               <WalletConnect />
             </div>

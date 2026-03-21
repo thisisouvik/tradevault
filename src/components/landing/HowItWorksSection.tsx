@@ -9,7 +9,7 @@ const steps = [
     actorColor: '#05445E',
     title: 'Create the contract',
     description:
-      'Fill in trade terms — item, price in USDC, delivery deadline, dispute window, buyer wallet. Deploy to Algorand with one tap in Pera Wallet. Terms are permanent from this moment.',
+      'Fill in trade terms — item, price in USDC, delivery deadline, dispute window, buyer wallet. Deploy to Algorand with one tap in Lute Wallet. Terms are permanent from this moment.',
     tag: 'PROPOSED',
     tagColor: '#189AB4',
   },
@@ -19,7 +19,7 @@ const steps = [
     actorColor: '#8B5CF6',
     title: 'Accept and fund atomically',
     description:
-      "Open the contract link, connect Pera Wallet, click 'Accept & Fund.' Two transactions grouped atomically — your acceptance signature and USDC transfer. Contract state → FUNDED.",
+      "Open the contract link, connect Lute Wallet, click 'Accept & Fund.' Two transactions grouped atomically — your acceptance signature and USDC transfer. Contract state → FUNDED.",
     tag: 'FUNDED',
     tagColor: '#8B5CF6',
   },

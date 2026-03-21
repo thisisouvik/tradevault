@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 const logos = [
   { name: 'Algorand', color: '#05445E' },
   { name: 'USDC', color: '#189AB4' },
-  { name: 'Pera Wallet', color: '#F59E0B' },
+  { name: 'Lute Wallet', color: '#F59E0B' },
   { name: 'TrackingMore', color: '#8B5CF6' },
   { name: 'Supabase', color: '#10B981' },
   { name: 'Vercel', color: '#05445E' },

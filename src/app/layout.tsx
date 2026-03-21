@@ -25,6 +25,7 @@ export const metadata: Metadata = {
 }
 
 import { Providers } from '@/components/Providers'
+import { Toaster } from 'react-hot-toast'
 
 export default function RootLayout({
   children,
@@ -37,6 +38,37 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <Toaster 
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: '#333',
+              color: '#fff',
+              borderRadius: '8px',
+              fontWeight: 500,
+            },
+            success: {
+              style: {
+                background: '#10B981',
+                color: '#fff',
+              },
+              iconTheme: {
+                primary: '#fff',
+                secondary: '#10B981',
+              },
+            },
+            error: {
+              style: {
+                background: '#EF4444',
+                color: '#fff',
+              },
+              iconTheme: {
+                primary: '#fff',
+                secondary: '#EF4444',
+              },
+            },
+          }}
+        />
       </body>
     </html>
   )

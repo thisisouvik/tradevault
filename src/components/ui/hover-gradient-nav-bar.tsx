@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Search, Menu, X } from 'lucide-react';
+import { Search, Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
 
 const menuItems = [
   { label: "How it works", href: "/#how-it-works" },
@@ -13,12 +15,40 @@ const menuItems = [
 function HoverGradientNavBar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Auth state
+  const [supabase] = useState(() => createClient());
+  const [user, setUser] = useState<any>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   useEffect(() => {
+    // Handle scroll
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    
+    // Fetch user
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error('Failed to log out');
+    } else {
+      toast.success('Logged out successfully');
+      setProfileMenuOpen(false);
+    }
+  };
 
   return (
     <header
@@ -51,8 +81,8 @@ function HoverGradientNavBar() {
           ))}
         </nav>
 
-        {/* Search + Join Us (Desktop) */}
-        <div className="hidden md:flex items-center gap-4">
+        {/* Search + Auth Actions (Desktop) */}
+        <div className="hidden md:flex items-center gap-5">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-[#189AB4]" />
@@ -63,20 +93,48 @@ function HoverGradientNavBar() {
               className="pl-10 pr-4 py-2 w-44 lg:w-52 rounded-full bg-white/80 border border-[#189AB4]/20 text-sm text-[#05445E] placeholder:text-[#189AB4]/50 focus:outline-none focus:ring-2 focus:ring-[#189AB4]/40 shadow-sm font-medium transition-all"
             />
           </div>
-          <Link href="/auth/signup">
-            <button className="rounded-full bg-[#05445E] hover:bg-[#189AB4] text-white px-6 py-2 text-sm font-semibold transition-all duration-200 shadow-md hover:-translate-y-px">
-              Join Us
-            </button>
-          </Link>
+          
+          {user ? (
+            <div className="relative">
+              <button 
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="w-10 h-10 rounded-full bg-[#D6EFF9] text-[#05445E] flex items-center justify-center font-bold relative transition-colors border border-[#189AB4]/30 hover:bg-[#189AB4] hover:text-white"
+              >
+                {user.user_metadata?.name?.charAt(0)?.toUpperCase() || <User className="w-5 h-5" />}
+              </button>
+              
+              <AnimateProfileDropdown 
+                isOpen={profileMenuOpen} 
+                onClose={() => setProfileMenuOpen(false)} 
+                user={user} 
+                onLogout={handleLogout} 
+              />
+            </div>
+          ) : (
+            <Link href="/auth/signup">
+              <button className="rounded-full bg-[#05445E] hover:bg-[#189AB4] text-white px-6 py-2 text-sm font-semibold transition-all duration-200 shadow-md hover:-translate-y-px">
+                Join Us
+              </button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile Menu Toggle Button */}
         <div className="md:hidden flex items-center gap-3 relative z-50">
-          <Link href="/auth/signup" onClick={() => setMobileMenuOpen(false)} className="sm:hidden">
-            <button className="rounded-full bg-[#05445E] text-white px-5 py-1.5 text-xs font-semibold shadow-sm">
-              Join Us
-            </button>
-          </Link>
+          {user ? (
+            <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="sm:hidden">
+              <button className="rounded-full bg-[#D6EFF9] text-[#05445E] px-4 py-1.5 text-xs font-bold border border-[#189AB4]/30 flex items-center gap-1.5">
+                <LayoutDashboard className="w-3.5 h-3.5" /> Dashboard
+              </button>
+            </Link>
+          ) : (
+            <Link href="/auth/signup" onClick={() => setMobileMenuOpen(false)} className="sm:hidden">
+              <button className="rounded-full bg-[#05445E] text-white px-5 py-1.5 text-xs font-semibold shadow-sm">
+                Join Us
+              </button>
+            </Link>
+          )}
+
           <button 
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="text-[#05445E] p-1.5 rounded-md hover:bg-[#189AB4]/10 transition-colors"
@@ -89,7 +147,7 @@ function HoverGradientNavBar() {
       {/* Mobile Menu Dropdown */}
       <div 
         className={`md:hidden absolute top-16 left-0 w-full bg-white border-b border-[#189AB4]/10 shadow-xl transition-all duration-300 ease-in-out overflow-hidden z-40 ${
-          mobileMenuOpen ? 'max-h-[500px] opacity-100 py-6' : 'max-h-0 opacity-0 py-0'
+          mobileMenuOpen ? 'max-h-[600px] opacity-100 py-6' : 'max-h-0 opacity-0 py-0'
         }`}
       >
         <div className="px-6 space-y-6">
@@ -104,6 +162,29 @@ function HoverGradientNavBar() {
                 {item.label}
               </Link>
             ))}
+            
+            {user && (
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-bold text-[#05445E] hover:text-[#189AB4] transition-colors border-b border-[#189AB4]/10 pb-3 flex items-center gap-2"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-lg font-bold text-red-600 hover:text-red-700 transition-colors border-b border-[#189AB4]/10 pb-3 flex items-center gap-2 text-left w-full"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Log out
+                </button>
+              </>
+            )}
           </nav>
           
           <div className="relative w-full">
@@ -120,6 +201,33 @@ function HoverGradientNavBar() {
       </div>
 
     </header>
+  );
+}
+
+// Separate component to keep things clean
+function AnimateProfileDropdown({ isOpen, onClose, user, onLogout }: { isOpen: boolean, onClose: () => void, user: any, onLogout: () => void }) {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40" onClick={onClose}></div>
+      <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-[0_10px_40px_rgba(5,68,94,0.1)] border border-[#189AB4]/10 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200 origin-top-right">
+        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+          <p className="text-sm font-extrabold text-[#05445E] truncate">{user?.user_metadata?.name || 'TradeVault User'}</p>
+          <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{user?.email}</p>
+        </div>
+        <div className="p-1.5 flex flex-col gap-0.5">
+          <Link href="/dashboard" onClick={onClose} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-bold text-[#05445E] hover:text-[#189AB4] hover:bg-[#D6EFF9]/50 transition-colors">
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
+          </Link>
+          <button onClick={onLogout} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-bold text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors text-left">
+            <LogOut className="w-4 h-4" />
+            Log out
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 

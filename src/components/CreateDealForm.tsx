@@ -296,7 +296,7 @@ export default function CreateDealForm() {
               className="w-full px-4 py-2 rounded-lg text-sm text-[#111827] font-mono bg-[#F9FAFB] border border-[#E5E7EB] placeholder:text-[#9CA3AF] outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
             />
             <p className="text-xs text-[#9CA3AF] mt-1.5 font-medium">
-              The buyer must have a Pera Wallet connected on our platform.
+              The buyer must have a Lute Wallet connected on our platform.
             </p>
           </div>
         </div>
@@ -345,7 +345,7 @@ export default function CreateDealForm() {
       </motion.button>
       
       <p className="text-center text-xs text-[#9CA3AF] font-medium">
-        Pera Wallet will open for signature. Terms are permanent once deployed on Algorand.
+        Lute Wallet will open for signature. Terms are permanent once deployed on Algorand.
       </p>
     </form>
   )

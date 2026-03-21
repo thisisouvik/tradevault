@@ -18,8 +18,6 @@ export function getWalletManager(): WalletManager {
       wallets: [
         WalletId.DEFLY,
         WalletId.LUTE,
-        WalletId.PERA, // Keep pera for legacy users
-        WalletId.WALLETCONNECT
       ],
       defaultNetwork: NetworkId.TESTNET,
     })
