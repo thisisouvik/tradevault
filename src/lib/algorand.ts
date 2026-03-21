@@ -139,7 +139,7 @@ export async function writeReputationNote(
       sender: account.addr,
       receiver: account.addr,
       amount: 0,
-      note: new TextEncoder().encode(`trustescrow:rep:${note}`),
+      note: new TextEncoder().encode(`TradeVault:rep:${note}`),
       suggestedParams: params,
     })
 

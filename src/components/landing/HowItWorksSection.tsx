@@ -6,12 +6,12 @@ const steps = [
   {
     number: '01',
     actor: 'Seller',
-    actorColor: '#2563EB',
+    actorColor: '#05445E',
     title: 'Create the contract',
     description:
       'Fill in trade terms — item, price in USDC, delivery deadline, dispute window, buyer wallet. Deploy to Algorand with one tap in Pera Wallet. Terms are permanent from this moment.',
     tag: 'PROPOSED',
-    tagColor: '#6B7280',
+    tagColor: '#189AB4',
   },
   {
     number: '02',
@@ -26,7 +26,7 @@ const steps = [
   {
     number: '03',
     actor: 'Seller',
-    actorColor: '#2563EB',
+    actorColor: '#05445E',
     title: 'Ship and submit tracking',
     description:
       'Ship the goods. Paste tracking number and select carrier. Platform verifies it with TrackingMore API, stores SHA256 hash permanently on-chain. Dispute window starts.',
@@ -47,7 +47,7 @@ const steps = [
 
 export function HowItWorksSection() {
   return (
-    <section id="how-it-works" className="py-24 sm:py-32 relative overflow-hidden bg-white border-b border-gray-100">
+    <section id="how-it-works" className="py-24 sm:py-32 relative overflow-hidden bg-white border-b border-[#189AB4]/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
@@ -55,7 +55,7 @@ export function HowItWorksSection() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-4 bg-blue-50 border border-blue-100 text-[#2563EB]"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-4 bg-[#189AB4]/10 border border-[#189AB4]/20 text-[#05445E]"
           >
             How it works
           </motion.div>
@@ -64,19 +64,17 @@ export function HowItWorksSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-4xl sm:text-5xl font-bold text-[#111827] mb-4"
+            className="text-4xl sm:text-5xl font-bold text-[#05445E] mb-4"
           >
             From proposal to payment{' '}
-            <span className="text-[#2563EB]">
-              in 4 steps.
-            </span>
+            <span className="text-[#189AB4]">in 4 steps.</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="max-w-xl mx-auto text-[#6B7280] text-lg"
+            className="max-w-xl mx-auto text-[#3a7fa0] text-lg"
           >
             No bank account needed. No wire transfers. No waiting 3–5 business days.
           </motion.p>
@@ -92,22 +90,16 @@ export function HowItWorksSection() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: '-50px' }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="relative flex flex-col sm:flex-row gap-6 items-start bg-white border border-[#E5E7EB] rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
+                className="relative flex flex-col sm:flex-row gap-6 items-start bg-white border border-[#189AB4]/15 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-[#189AB4]/30 transition-all"
               >
-                {/* Step number circle */}
                 <div className="flex-shrink-0">
                   <div
                     className="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl"
-                    style={{
-                      background: `${step.actorColor}10`,
-                      color: step.actorColor,
-                    }}
+                    style={{ background: `${step.actorColor}10`, color: step.actorColor }}
                   >
                     {step.number}
                   </div>
                 </div>
-
-                {/* Content */}
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2 mb-3">
                     <span
@@ -123,8 +115,8 @@ export function HowItWorksSection() {
                       {step.tag}
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold text-[#111827] mb-2">{step.title}</h3>
-                  <p className="text-[#6B7280] leading-relaxed">{step.description}</p>
+                  <h3 className="text-xl font-bold text-[#05445E] mb-2">{step.title}</h3>
+                  <p className="text-[#3a7fa0] leading-relaxed">{step.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -137,14 +129,14 @@ export function HowItWorksSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
-          className="mt-10 max-w-4xl mx-auto rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-red-50 border border-red-100"
+          className="mt-10 max-w-4xl mx-auto rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-[#FEF2F2] border border-red-100"
         >
           <div className="w-10 h-10 flex-shrink-0 rounded-xl bg-red-100 flex items-center justify-center text-red-500 font-bold text-lg">
             !
           </div>
           <div>
-            <p className="text-[#111827] font-semibold mb-1">What if there's a dispute?</p>
-            <p className="text-[#6B7280] text-sm">
+            <p className="text-[#05445E] font-semibold mb-1">What if there's a dispute?</p>
+            <p className="text-[#3a7fa0] text-sm">
               Buyer can raise a dispute within the window. Both parties submit photo evidence. An arbitrator reviews and submits a split verdict (e.g. 80/20). Smart contract executes the proportional USDC payout instantly.
             </p>
           </div>
@@ -153,3 +145,4 @@ export function HowItWorksSection() {
     </section>
   )
 }
+

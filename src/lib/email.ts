@@ -23,7 +23,7 @@ export async function sendEmail(payload: EmailPayload): Promise<void> {
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM || 'TrustEscrow <noreply@trustescrow.app>',
+        from: process.env.RESEND_FROM || 'TradeVault <noreply@TradeVault.app>',
         to: payload.to,
         subject: payload.subject,
         html: payload.html,
@@ -45,15 +45,15 @@ export const emailTemplates = {
     itemName: string,
     amountUSDC: number
   ) => ({
-    subject: `${sellerName} wants to trade with you — TrustEscrow`,
+    subject: `${sellerName} wants to trade with you — TradeVault`,
     html: `
       <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#04101f;color:#f0f4f8;padding:40px;border-radius:16px">
         <div style="margin-bottom:32px">
-          <span style="font-size:24px;font-weight:800;color:#4ade80">TrustEscrow</span>
+          <span style="font-size:24px;font-weight:800;color:#4ade80">TradeVault</span>
         </div>
         <h1 style="font-size:24px;font-weight:700;margin-bottom:16px">New Trade Proposal</h1>
         <p style="color:#8ca0b3;margin-bottom:24px">
-          Hi ${buyerName || 'there'}, <strong style="color:#f0f4f8">${sellerName}</strong> has proposed a trade with you on TrustEscrow.
+          Hi ${buyerName || 'there'}, <strong style="color:#f0f4f8">${sellerName}</strong> has proposed a trade with you on TradeVault.
         </p>
         <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px;margin-bottom:24px">
           <p style="margin-bottom:8px"><strong>Item:</strong> ${itemName}</p>
@@ -71,7 +71,7 @@ export const emailTemplates = {
     html: `
       <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#04101f;color:#f0f4f8;padding:40px;border-radius:16px">
         <div style="margin-bottom:32px">
-          <span style="font-size:24px;font-weight:800;color:#4ade80">TrustEscrow</span>
+          <span style="font-size:24px;font-weight:800;color:#4ade80">TradeVault</span>
         </div>
         <h1 style="font-size:24px;font-weight:700;margin-bottom:16px">&#x1F389; Your Escrow is Funded!</h1>
         <p style="color:#8ca0b3;margin-bottom:24px">
@@ -95,7 +95,7 @@ export const emailTemplates = {
     html: `
       <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#04101f;color:#f0f4f8;padding:40px;border-radius:16px">
         <div style="margin-bottom:32px">
-          <span style="font-size:24px;font-weight:800;color:#4ade80">TrustEscrow</span>
+          <span style="font-size:24px;font-weight:800;color:#4ade80">TradeVault</span>
         </div>
         <h1 style="font-size:24px;font-weight:700;margin-bottom:16px">&#x1F4E6; Your Shipment is On the Way!</h1>
         <p style="color:#8ca0b3;margin-bottom:24px">Hi ${buyerName}, the seller has shipped your item.</p>
@@ -116,7 +116,7 @@ export const emailTemplates = {
     html: `
       <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#04101f;color:#f0f4f8;padding:40px;border-radius:16px">
         <div style="margin-bottom:32px">
-          <span style="font-size:24px;font-weight:800;color:#4ade80">TrustEscrow</span>
+          <span style="font-size:24px;font-weight:800;color:#4ade80">TradeVault</span>
         </div>
         <h1 style="font-size:24px;font-weight:700;margin-bottom:16px">&#x2705; Deal Completed</h1>
         <p style="color:#8ca0b3">Hi ${name}, your deal for <strong style="color:#f0f4f8">${itemName}</strong> worth <strong style="color:#4ade80">$${amountUSDC} USDC</strong> has been completed successfully.</p>
@@ -129,7 +129,7 @@ export const emailTemplates = {
     html: `
       <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#04101f;color:#f0f4f8;padding:40px;border-radius:16px">
         <div style="margin-bottom:32px">
-          <span style="font-size:24px;font-weight:800;color:#4ade80">TrustEscrow</span>
+          <span style="font-size:24px;font-weight:800;color:#4ade80">TradeVault</span>
         </div>
         <h1 style="font-size:24px;font-weight:700;margin-bottom:16px">&#x26A0;&#xFE0F; Dispute Opened</h1>
         <p style="color:#8ca0b3;margin-bottom:24px">Hi ${name}, a dispute has been opened on your deal. Please submit evidence within 48 hours.</p>

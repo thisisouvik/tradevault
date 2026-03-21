@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const subject = `Dispute resolved — ${deal.item_name}`
     const html = `
       <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;background:#04101f;color:#f0f4f8;padding:40px;border-radius:16px">
-        <span style="font-size:24px;font-weight:800;color:#4ade80;display:block;margin-bottom:24px">TrustEscrow</span>
+        <span style="font-size:24px;font-weight:800;color:#4ade80;display:block;margin-bottom:24px">TradeVault</span>
         <h1 style="font-size:22px;font-weight:700;margin-bottom:16px">&#x2696;&#xFE0F; Dispute Resolved</h1>
         <p style="color:#8ca0b3;margin-bottom:16px">
           The arbitrator has reviewed your case for <strong style="color:#f0f4f8">${deal.item_name}</strong>.
