@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { PackagePlus, DollarSign, Clock, Mail, FileText, AlertCircle, CheckCircle2, Shield } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { PackagePlus, DollarSign, Clock, Mail, FileText, AlertCircle, CheckCircle2, Shield, AlertTriangle, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useWallet } from '@txnlab/use-wallet-react'
-import { algodClient, USDC_ASSET_ID } from '@/lib/algorand'
+import { algodClient } from '@/lib/algorand'
 import algosdk from 'algosdk'
 
 export default function CreateDealForm() {
@@ -21,11 +21,13 @@ export default function CreateDealForm() {
     deliveryDays: '10',
     disputeWindowDays: '7',
     buyerEmail: '',
-    buyerWallet: '',
+    buyerWallet: ''
   })
+  
   const [step, setStep] = useState<'form' | 'deploying' | 'saving' | 'done'>('form')
   const [error, setError] = useState('')
   const [txId, setTxId] = useState('')
+  const [appId, setAppId] = useState('')
 
   function updateForm(field: string, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -35,13 +37,13 @@ export default function CreateDealForm() {
     e.preventDefault()
     setError('')
 
-    // Validate
     if (!form.buyerWallet || !algosdk.isValidAddress(form.buyerWallet)) {
       setError('Please enter a valid Algorand wallet address for the buyer.')
       return
     }
-    if (parseInt(form.amountUSDC) < 1) {
-      setError('Minimum amount is 1 USDC.')
+    const amount = parseInt(form.amountUSDC)
+    if (isNaN(amount) || amount < 10 || amount > 50000) {
+      setError('USDC amount must be between $10 and $50,000.')
       return
     }
 
@@ -63,11 +65,9 @@ export default function CreateDealForm() {
 
       // Build contract creation transaction
       const sellerAddress = activeAddress
-
       const params = await algodClient.getTransactionParams().do()
-      const amountMicro = parseInt(form.amountUSDC) * 1_000_000
+      const amountMicro = amount * 1_000_000
 
-      // Placeholder deploy
       const appCreateTxn = algosdk.makeApplicationCreateTxnFromObject({
         sender: sellerAddress,
         suggestedParams: params,
@@ -94,10 +94,12 @@ export default function CreateDealForm() {
       setTxId(txid)
 
       const confirmation = await algosdk.waitForConfirmation(algodClient, txid, 4)
-      const appId = confirmation.applicationIndex?.toString() || `demo-${Date.now()}`
-      const appAddress = appId !== `demo-${Date.now()}`
-        ? algosdk.getApplicationAddress(parseInt(appId))
-        : `APP_ADDR_${appId}`
+      const newAppId = confirmation.applicationIndex?.toString() || `demo-${Date.now()}`
+      setAppId(newAppId)
+      
+      const appAddress = newAppId !== `demo-${Date.now()}`
+        ? algosdk.getApplicationAddress(parseInt(newAppId))
+        : `APP_ADDR_${newAppId}`
 
       setStep('saving')
 
@@ -111,11 +113,12 @@ export default function CreateDealForm() {
           buyerWallet: form.buyerWallet,
           itemName: form.itemName,
           itemDescription: form.itemDescription,
-          amountUSDC: parseInt(form.amountUSDC),
+          amountUSDC: amount,
           deliveryDays: parseInt(form.deliveryDays),
           disputeWindowDays: parseInt(form.disputeWindowDays),
-          contractAppId: appId,
+          contractAppId: newAppId,
           contractAddress: appAddress,
+          arbitrator: 'default',
         }),
       })
 
@@ -126,7 +129,7 @@ export default function CreateDealForm() {
 
       const { dealId } = await res.json()
       setStep('done')
-      setTimeout(() => router.push(`/deal/${dealId}`), 1500)
+      setTimeout(() => router.push(`/deal/${dealId}`), 4000)
 
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'An error occurred'
@@ -137,216 +140,243 @@ export default function CreateDealForm() {
 
   if (step === 'deploying' || step === 'saving') {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl shadow-sm border border-slate-200">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          className="w-16 h-16 rounded-full border-4 border-[#2563EB]/20 border-t-[#2563EB] mb-6"
+          className="w-16 h-16 rounded-full border-4 border-[#189AB4]/20 border-t-[#189AB4] mb-6"
         />
-        <h2 className="text-xl font-semibold text-[#111827] mb-2">
-          {step === 'deploying' ? 'Deploying to Algorand...' : 'Saving contract...'}
+        <h2 className="text-xl font-extrabold text-[#05445E] mb-2">
+          {step === 'deploying' ? 'Deploying to Algorand...' : 'Saving Contract State...'}
         </h2>
-        <p className="text-[#6B7280] text-sm max-w-sm">
+        <p className="text-slate-500 text-sm max-w-sm font-medium">
           {step === 'deploying'
-            ? 'Approve the transaction in your Wallet. This creates the immutable smart contract on Algorand TestNet.'
-            : 'Contract confirmed. Saving deal to database and sending email to buyer...'}
+            ? 'Please approve the transaction in your connected wallet. This securely records the exact terms to the Algorand blockchain.'
+            : 'Blockchain confirmed. Saving deal securely to database and notifying buyer...'}
         </p>
-        {txId && (
-          <a
-            href={`https://testnet.algoexplorer.io/tx/${txId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 text-xs text-[#2563EB] hover:underline font-mono"
-          >
-            Tx: {txId.slice(0, 20)}...
-          </a>
-        )}
       </div>
     )
   }
 
   if (step === 'done') {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-2xl shadow-sm border border-[#10B981]/30">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          className="w-16 h-16 rounded-full bg-[#10B981]/10 flex items-center justify-center mb-6"
+          className="w-20 h-20 rounded-full bg-[#10B981]/10 flex items-center justify-center mb-6 shadow-xl shadow-[#10B981]/20"
         >
-          <CheckCircle2 className="w-8 h-8 text-[#10B981]" />
+          <CheckCircle2 className="w-10 h-10 text-[#10B981]" />
         </motion.div>
-        <h2 className="text-xl font-semibold text-[#111827] mb-2">Contract created!</h2>
-        <p className="text-[#6B7280] text-sm">Redirecting to your contract page...</p>
+        
+        <div className="bg-green-50 border border-green-200 text-green-800 px-6 py-4 rounded-xl max-w-md mx-auto mb-6">
+          <p className="font-bold text-sm">Contract deployed successfully on Algorand.</p>
+          <p className="mt-1 flex items-center justify-center gap-2 text-sm font-semibold text-green-700">
+            App ID: {appId.startsWith('demo') ? 'Simulated' : appId}
+            {txId && (
+              <a href={`https://testnet.algoexplorer.io/tx/${txId}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:text-green-900 underline">
+                <ExternalLink className="w-3 h-3"/> Verify Link
+              </a>
+            )}
+          </p>
+        </div>
+
+        <h2 className="text-2xl font-extrabold text-[#05445E] mb-2">Deal Created Successfully!</h2>
+        <p className="text-slate-500 font-medium">Redirecting you to the active deal room...</p>
       </div>
     )
   }
 
+  const isFormValid = form.itemName && form.amountUSDC && form.buyerWallet && form.deliveryDays && form.disputeWindowDays;
+
   return (
-    <form onSubmit={handleCreate} className="space-y-6">
-      {/* Item details */}
-      <div className="saas-card">
-        <h2 className="text-base font-semibold text-[#111827] mb-4 flex items-center gap-2">
-          <PackagePlus className="w-5 h-5 text-[#2563EB]" />
-          Item Details
-        </h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-[#6B7280] mb-1.5">Item Name *</label>
-            <input
-              type="text"
-              value={form.itemName}
-              onChange={e => updateForm('itemName', e.target.value)}
-              placeholder="e.g. 50kg Cotton Fabric"
-              required
-              className="w-full px-4 py-2 rounded-lg text-sm text-[#111827] bg-[#F9FAFB] border border-[#E5E7EB] placeholder:text-[#9CA3AF] outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#6B7280] mb-1.5">Description (Optional)</label>
-            <textarea
-              value={form.itemDescription}
-              onChange={e => updateForm('itemDescription', e.target.value)}
-              placeholder="Additional details about the goods..."
-              rows={3}
-              className="w-full px-4 py-2 rounded-lg text-sm text-[#111827] bg-[#F9FAFB] border border-[#E5E7EB] placeholder:text-[#9CA3AF] outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all resize-none"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Trade terms */}
-      <div className="saas-card">
-        <h2 className="text-base font-semibold text-[#111827] mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5 text-[#2563EB]" />
-          Trade Terms (Permanent On-Chain)
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-[#6B7280] mb-1.5">Amount (USDC) *</label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
-              <input
-                type="number"
-                min="1"
-                value={form.amountUSDC}
-                onChange={e => updateForm('amountUSDC', e.target.value)}
-                placeholder="500"
-                required
-                className="w-full pl-9 pr-4 py-2 rounded-lg text-sm text-[#111827] bg-[#F9FAFB] border border-[#E5E7EB] placeholder:text-[#9CA3AF] outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#6B7280] mb-1.5">Delivery Deadline (Days)</label>
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
-              <input
-                type="number"
-                min="1"
-                max="90"
-                value={form.deliveryDays}
-                onChange={e => updateForm('deliveryDays', e.target.value)}
-                required
-                className="w-full pl-9 pr-4 py-2 rounded-lg text-sm text-[#111827] bg-[#F9FAFB] border border-[#E5E7EB] placeholder:text-[#9CA3AF] outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#6B7280] mb-1.5">Dispute Window (Days)</label>
-            <input
-              type="number"
-              min="1"
-              max="30"
-              value={form.disputeWindowDays}
-              onChange={e => updateForm('disputeWindowDays', e.target.value)}
-              required
-              className="w-full px-4 py-2 rounded-lg text-sm text-[#111827] bg-[#F9FAFB] border border-[#E5E7EB] placeholder:text-[#9CA3AF] outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Buyer info */}
-      <div className="saas-card">
-        <h2 className="text-base font-semibold text-[#111827] mb-4 flex items-center gap-2">
-          <Mail className="w-5 h-5 text-[#2563EB]" />
-          Buyer Information
-        </h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-[#6B7280] mb-1.5">Buyer Email *</label>
-            <input
-              type="email"
-              value={form.buyerEmail}
-              onChange={e => updateForm('buyerEmail', e.target.value)}
-              placeholder="buyer@example.com"
-              required
-              className="w-full px-4 py-2 rounded-lg text-sm text-[#111827] bg-[#F9FAFB] border border-[#E5E7EB] placeholder:text-[#9CA3AF] outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[#6B7280] mb-1.5">Buyer Algorand Wallet *</label>
-            <input
-              type="text"
-              value={form.buyerWallet}
-              onChange={e => updateForm('buyerWallet', e.target.value)}
-              placeholder="ALGO4X...R2"
-              required
-              className="w-full px-4 py-2 rounded-lg text-sm text-[#111827] font-mono bg-[#F9FAFB] border border-[#E5E7EB] placeholder:text-[#9CA3AF] outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all"
-            />
-            <p className="text-xs text-[#9CA3AF] mt-1.5 font-medium">
-              The buyer must have a Lute Wallet connected on our platform.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Summary */}
-      {form.itemName && form.amountUSDC && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-xl p-4 bg-blue-50 border border-blue-100 flex items-start gap-3"
-        >
-          <FileText className="w-5 h-5 text-[#2563EB] mt-0.5 flex-shrink-0" />
-          <div className="text-sm">
-            <p className="text-[#111827] font-semibold mb-1">Contract Summary</p>
-            <p className="text-[#6B7280]">
-              <span className="text-[#111827] font-medium">{form.itemName}</span> for{' '}
-              <span className="text-[#2563EB] font-bold">${form.amountUSDC} USDC</span>.
-              Delivery within {form.deliveryDays} days.{' '}
-              {form.disputeWindowDays}-day dispute window after delivery.
-            </p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Error */}
-      {error && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-center gap-2 p-3 rounded-lg text-sm text-[#EF4444] bg-red-50 border border-red-100"
-        >
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          {error}
-        </motion.div>
-      )}
-
-      {/* Submit */}
-      <motion.button
-        type="submit"
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
-        className="btn-primary w-full py-3"
-      >
-        Deploy Contract
-      </motion.button>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       
-      <p className="text-center text-xs text-[#9CA3AF] font-medium">
-        Lute Wallet will open for signature. Terms are permanent once deployed on Algorand.
-      </p>
-    </form>
+      {/* LEFT COLUMN: FORM */}
+      <div className="lg:col-span-2 space-y-6">
+        <form onSubmit={handleCreate} className="space-y-6" id="create-deal-form">
+          
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b border-gray-100 pb-3">
+              <PackagePlus className="w-5 h-5 text-[#189AB4]" /> Item Details
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Item Name *</label>
+                <input
+                  type="text"
+                  maxLength={100}
+                  value={form.itemName}
+                  onChange={e => updateForm('itemName', e.target.value)}
+                  placeholder="e.g. 500 metres cotton fabric"
+                  required
+                  className="w-full px-3 py-2 rounded-md text-sm text-gray-900 border border-gray-300 placeholder:text-gray-400 outline-none focus:ring-1 focus:ring-[#189AB4] focus:border-[#189AB4] transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Item Description <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <textarea
+                  value={form.itemDescription}
+                  onChange={e => updateForm('itemDescription', e.target.value)}
+                  placeholder="Detailed specification..."
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-md text-sm text-gray-900 border border-gray-300 placeholder:text-gray-400 outline-none focus:ring-1 focus:ring-[#189AB4] focus:border-[#189AB4] transition-colors resize-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+              <span className="flex items-center gap-2"><Shield className="w-5 h-5 text-[#189AB4]" /> Trade Terms</span>
+              <span className="bg-[#e0f2fe] text-[#0369a1] text-xs px-2 py-0.5 rounded font-medium">Auto-executes on Algorand</span>
+            </h2>
+            <div className="space-y-6">
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Escrow Amount (USDC) *</label>
+                <div className="relative max-w-sm">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="number"
+                    min="10"
+                    max="50000"
+                    value={form.amountUSDC}
+                    onChange={e => updateForm('amountUSDC', e.target.value)}
+                    placeholder="500"
+                    required
+                    className="w-full pl-9 pr-14 py-2 rounded-md font-semibold text-gray-900 border border-gray-300 placeholder:text-gray-400 outline-none focus:ring-1 focus:ring-[#189AB4] focus:border-[#189AB4]"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">USDC</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ship within (Days) *</label>
+                  <select
+                    value={form.deliveryDays}
+                    onChange={e => updateForm('deliveryDays', e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-md text-sm text-gray-900 border border-gray-300 outline-none focus:ring-1 focus:ring-[#189AB4] focus:border-[#189AB4]"
+                  >
+                    {[7, 10, 14, 21, 30].map(d => <option key={d} value={d}>{d} Days</option>)}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Dispute Window (Days) *</label>
+                  <select
+                    value={form.disputeWindowDays}
+                    onChange={e => updateForm('disputeWindowDays', e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-md text-sm text-gray-900 border border-gray-300 outline-none focus:ring-1 focus:ring-[#189AB4] focus:border-[#189AB4]"
+                  >
+                     {[3, 5, 7, 14].map(d => <option key={d} value={d}>{d} Days post-delivery</option>)}
+                  </select>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 border-b border-gray-100 pb-3">
+              <Mail className="w-5 h-5 text-[#189AB4]" /> Buyer Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Buyer Wallet Address *</label>
+                <input
+                  type="text"
+                  value={form.buyerWallet}
+                  onChange={e => updateForm('buyerWallet', e.target.value)}
+                  placeholder="ALGO address..."
+                  required
+                  className="w-full px-3 py-2 rounded-md text-sm font-mono text-gray-900 border border-gray-300 outline-none focus:ring-1 focus:border-[#189AB4]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Buyer Email <span className="text-gray-400 font-normal">(Optional)</span></label>
+                <input
+                  type="email"
+                  value={form.buyerEmail}
+                  onChange={e => updateForm('buyerEmail', e.target.value)}
+                  placeholder="buyer@business.com"
+                  className="w-full px-3 py-2 rounded-md text-sm text-gray-900 border border-gray-300 outline-none focus:ring-1 focus:border-[#189AB4]"
+                />
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {/* RIGHT COLUMN: PREVIEW STICKY CARD */}
+      <div className="lg:col-span-1 relative">
+        <div className="sticky top-24 space-y-4">
+          
+          <div className="bg-white rounded-lg p-5 shadow-sm border border-gray-200 text-sm">
+            
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 pb-2 border-b border-gray-100">
+              <FileText className="w-4 h-4 text-[#189AB4]"/> Summary
+            </h3>
+
+            <div className="space-y-3">
+              <div className="flex flex-col">
+                <span className="text-gray-500 text-xs font-medium uppercase mb-0.5">Selling</span>
+                <span className="text-gray-900 font-semibold">{form.itemName || <span className="text-gray-400 italic font-normal">Not set</span>}</span>
+              </div>
+              
+              <div className="flex flex-col">
+                <span className="text-gray-500 text-xs font-medium uppercase mb-0.5">Escrow Amount</span>
+                <span className="text-[#10b981] font-bold text-lg">{form.amountUSDC ? `$${form.amountUSDC} USDC` : <span className="text-gray-400 italic text-base font-normal">Not set</span>}</span>
+              </div>
+
+              <div className="flex flex-col">
+                <span className="text-gray-500 text-xs font-medium uppercase mb-0.5">Buyer Address</span>
+                <span className="text-gray-900 font-mono truncate">{form.buyerWallet || <span className="text-gray-400 italic text-sans font-normal">Not set</span>}</span>
+              </div>
+
+              <div className="flex flex-col mt-4 pt-3 border-t border-gray-100">
+                <span className="text-gray-500 text-xs font-medium uppercase mb-0.5">Terms</span>
+                <span className="text-gray-700">Ship within {form.deliveryDays} days</span>
+                <span className="text-gray-700">{form.disputeWindowDays} days dispute window</span>
+                <span className="text-gray-700 mt-1 flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-[#189AB4]"/> Platform Arbitrator</span>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-3 bg-blue-50 border border-blue-100 rounded-md">
+              <p className="text-xs text-blue-800 flex items-start gap-1.5 leading-relaxed">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                Review terms carefully. Once deployed, they are permanently locked on Algorand.
+              </p>
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-red-50 text-red-700 p-3 rounded-md text-sm font-medium border border-red-200"
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <button
+            type="submit"
+            form="create-deal-form"
+            disabled={!isFormValid}
+            className="w-full bg-[#05445E] hover:bg-[#189AB4] text-white py-3 rounded-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            Create Contract
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }

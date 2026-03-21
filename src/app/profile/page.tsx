@@ -44,97 +44,96 @@ export default async function ProfilePage() {
     .reduce((acc, d) => acc + d.amount_usdc, 0)
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5]">
+    <div className="min-h-screen bg-gray-50 text-slate-900 font-sans">
       {/* Header */}
-      <header className="h-16 bg-white flex items-center justify-between px-4 sm:px-6 border-b border-[#E5E7EB] sticky top-0 z-40">
-        <Link href="/dashboard" className="flex items-center gap-2 text-[#6B7280] hover:text-[#111827] transition-colors text-sm font-semibold">
-          <ArrowLeft className="w-4 h-4" />
-          Dashboard
-        </Link>
-        <div className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-[#2563EB]" />
-          <span className="text-sm font-bold text-[#111827]">TradeVault</span>
+      <header className="h-16 bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto h-full px-6 flex items-center justify-between">
+          <Link 
+            href="/dashboard" 
+            className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/logo.png" alt="TradeVault" className="w-6 h-6 object-contain" />
+            <span className="text-[#05445E] font-bold text-lg tracking-tight hidden sm:block">TradeVault</span>
+          </Link>
+          <div className="w-[124px] hidden sm:block" />{/* Spacer to keep center alignment */}
         </div>
-        <div />
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-10">
+      <main className="max-w-4xl mx-auto px-6 py-12">
 
         {/* Profile card */}
-        <div className="saas-card mb-6">
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#0EA5E9] flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
-              {profile?.name?.charAt(0)?.toUpperCase() || '?'}
+        <div className="bg-white rounded-lg p-6 mb-8 border border-gray-200 flex items-center gap-6">
+          <div className="w-16 h-16 rounded-full bg-[#F0F4F8] text-[#05445E] flex items-center justify-center border border-[#E1E8F0] shadow-sm flex-shrink-0">
+            <span className="font-bold text-xl">{profile?.name?.charAt(0)?.toUpperCase() || '?'}</span>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-3 flex-wrap mb-1">
+              <h1 className="text-2xl font-bold text-gray-900">{profile?.name}</h1>
+              <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${rc.bg}`}>
+                {rc.label}
+              </span>
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 flex-wrap mb-1">
-                <h1 className="text-xl font-bold text-[#111827]">{profile?.name}</h1>
-                <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${rc.bg}`}>
-                  <RoleIcon className="w-3.5 h-3.5" />
-                  {rc.label}
-                </span>
-              </div>
-              <p className="text-sm text-[#6B7280]">{profile?.email}</p>
-              <p className="text-xs text-[#9CA3AF] mt-1">
-                Member since {new Date(profile?.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              </p>
-            </div>
+            <p className="text-sm text-gray-500 mb-1">{profile?.email}</p>
+            <p className="text-xs text-gray-400 flex items-center gap-1.5">
+              Member since {new Date(profile?.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </p>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
           {[
-            { label: 'Total Deals', value: allDeals.length, color: '#2563EB' },
-            { label: 'Completed', value: completed, color: '#10B981' },
-            { label: 'Disputes', value: disputed, color: '#EF4444' },
+            { label: 'Total Deals', value: allDeals.length, valueClass: 'text-gray-900' },
+            { label: 'Completed', value: completed, valueClass: 'text-[#10b981]' },
+            { label: 'Disputes', value: disputed, valueClass: 'text-[#ef4444]' },
           ].map(stat => (
-            <div key={stat.label} className="saas-card text-center">
-              <p className="text-2xl font-bold text-[#111827]" style={{ color: stat.color }}>{stat.value}</p>
-              <p className="text-xs text-[#9CA3AF] mt-1">{stat.label}</p>
+            <div key={stat.label} className="bg-white rounded-lg p-5 border border-gray-200">
+              <p className="text-sm font-medium text-gray-500 mb-1">{stat.label}</p>
+              <h3 className={`text-2xl font-bold ${stat.valueClass}`}>{stat.value}</h3>
             </div>
           ))}
         </div>
 
         {/* Wallet section */}
-        <div className="saas-card mb-6">
-          <h2 className="text-sm font-semibold text-[#111827] mb-4 flex items-center gap-2">
-            <Star className="w-4 h-4 text-[#F59E0B]" />
-            Algorand Wallet
+        <div className="bg-white rounded-lg p-6 mb-8 border border-gray-200">
+          <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+            Algorand Wallet Connection
           </h2>
 
           {profile?.wallet_address ? (
-            <div className="space-y-3">
-              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-                <p className="text-xs text-[#9CA3AF] mb-1">Connected Wallet</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-mono text-[#111827] break-all flex-1">{profile.wallet_address}</p>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-md border border-gray-200">
+                <div className="flex justify-between items-center mb-1 text-sm">
+                  <span className="font-medium text-gray-700 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500" /> Connected Address
+                  </span>
                   <a
                     href={`https://testnet.algoexplorer.io/address/${profile.wallet_address}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#2563EB] hover:bg-blue-50 p-1.5 rounded flex-shrink-0"
+                    className="text-[#189AB4] hover:underline flex items-center gap-1 text-sm"
                   >
-                    <ExternalLink className="w-4 h-4" />
+                    View on Explorer <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
+                <p className="text-sm font-mono text-gray-900 break-all">{profile.wallet_address}</p>
               </div>
-              <Link
-                href={`/trader/${profile.wallet_address}`}
-                className="flex items-center gap-2 text-sm font-semibold text-[#2563EB] hover:underline"
-              >
-                <Star className="w-4 h-4" />
-                View my on-chain reputation →
-              </Link>
+              
+              <div className="text-sm text-gray-500 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-[#189AB4]" /> On-chain reputation coming soon
+              </div>
             </div>
           ) : (
-            <div className="text-center py-6">
-              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Star className="w-6 h-6 text-[#2563EB]" />
-              </div>
-              <p className="text-sm text-[#6B7280] mb-1 font-medium">No wallet connected</p>
-              <p className="text-xs text-[#9CA3AF] mb-4">
-                Connect your Lute or Defly wallet to sign contracts and track your on-chain reputation.
+            <div className="py-6 px-4 bg-gray-50 rounded-md border border-gray-200 flex flex-col items-center text-center">
+              <Shield className="w-10 h-10 text-gray-400 mb-3" />
+              <p className="text-md font-semibold text-gray-900 mb-1">No wallet connected</p>
+              <p className="text-sm text-gray-500 mb-6 max-w-sm">
+                Connect your Pera or Defly wallet to sign contracts and track your immutable on-chain reputation.
               </p>
               <WalletConnect />
             </div>
@@ -142,16 +141,15 @@ export default async function ProfilePage() {
         </div>
 
         {/* Volume */}
-        <div className="saas-card">
-          <h2 className="text-sm font-semibold text-[#111827] mb-4">Volume Statistics</h2>
-          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-100">
-            <div>
-              <p className="text-xs text-[#6B7280] mb-1">Total Completed Volume</p>
-              <p className="text-3xl font-bold text-[#2563EB]">${volume.toLocaleString()} USDC</p>
-            </div>
-            <div className="w-12 h-12 bg-[#2563EB] rounded-xl flex items-center justify-center">
-              <Star className="w-6 h-6 text-white" />
-            </div>
+        <div className="bg-white rounded-lg p-6 border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 mb-1">
+              Lifetime Trading Volume
+            </h2>
+            <p className="text-sm text-gray-500">Total volume of all completed escrow contracts</p>
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-[#10b981]">${volume.toLocaleString()} <span className="text-sm font-medium text-gray-500">USDC</span></p>
           </div>
         </div>
 

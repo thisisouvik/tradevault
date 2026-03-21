@@ -17,7 +17,11 @@ export function getWalletManager(): WalletManager {
     walletManagerInstance = new WalletManager({
       wallets: [
         WalletId.DEFLY,
-        WalletId.LUTE,
+        WalletId.PERA,
+        {
+          id: WalletId.LUTE,
+          options: { siteName: 'TradeVault' }
+        },
       ],
       defaultNetwork: NetworkId.TESTNET,
     })
