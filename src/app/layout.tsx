@@ -11,14 +11,14 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: 'TrustEscrow — Trustless Trade on Algorand',
-    template: '%s | TrustEscrow',
+    default: 'TradeVault — Trustless Trade on Algorand',
+    template: '%s | TradeVault',
   },
   description:
     'Replace a $240 bank letter of credit with a $0.002 Algorand smart contract. Trade cross-border with zero trust required — the contract holds the money.',
   keywords: ['escrow', 'algorand', 'blockchain', 'trade', 'USDC', 'DeFi', 'smart contract'],
   openGraph: {
-    title: 'TrustEscrow — Trustless Trade on Algorand',
+    title: 'TradeVault — Trustless Trade on Algorand',
     description: 'Decentralized escrow for cross-border trade. No banks. No middlemen.',
     type: 'website',
   },

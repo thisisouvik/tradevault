@@ -68,7 +68,7 @@ export default async function DashboardPage() {
       <aside className="w-[240px] bg-[#1A1D23] flex flex-col flex-shrink-0">
         <div className="h-16 flex items-center px-6 border-b border-white/5">
           <Shield className="w-5 h-5 text-[#2563EB] mr-2" />
-          <span className="text-white font-semibold text-lg">TrustEscrow</span>
+          <span className="text-white font-semibold text-lg">TradeVault</span>
         </div>
         
         <div className="flex-1 overflow-y-auto py-6 px-4">
