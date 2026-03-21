@@ -10,20 +10,20 @@ export function HeroSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 items-end gap-0">
           
-          {/* Left — friend's original text & buttons */}
+          {/* Left — text & buttons */}
           <motion.div
             initial={{ opacity: 0, y: 32 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut' }}
-            className="pb-16 pt-4 max-w-lg"
+            className="pb-8 lg:pb-16 pt-8 lg:pt-4 max-w-lg flex flex-col"
           >
-            <h1 className="text-4xl md:text-5xl font-extrabold text-[#05445E] leading-tight mb-3">
+            <h1 className="text-4xl md:text-5xl lg:text-5xl font-extrabold text-[#05445E] leading-tight mb-3">
               TradeVault
             </h1>
-            <p className="text-[#189AB4] font-semibold text-lg mb-4">
+            <p className="text-[#189AB4] font-semibold text-lg md:text-xl mb-4">
               Trade with confidence. Every single time.
             </p>
-            <p className="text-[#3a7fa0] text-sm mb-10 leading-relaxed max-w-sm">
+            <p className="text-[#3a7fa0] text-sm md:text-base mb-8 lg:mb-10 leading-relaxed max-w-sm">
               USDC locked in a smart contract until delivery is confirmed — no bank, no middleman, no risk of fraud.
             </p>
             <div className="flex flex-wrap gap-4">
@@ -42,7 +42,7 @@ export function HeroSection() {
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
-            className="flex items-end justify-center h-[440px]"
+            className="flex items-end justify-center h-[280px] sm:h-[340px] lg:h-[440px] w-full mt-4 lg:mt-0"
           >
             <img
               src="/mainScreen.svg"
