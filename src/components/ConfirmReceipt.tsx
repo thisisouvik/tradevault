@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react'
-import { getPeraWallet } from '@/lib/wallet'
+import { useWallet } from '@txnlab/use-wallet-react'
 import { algodClient } from '@/lib/algorand'
 import algosdk from 'algosdk'
 
@@ -21,6 +21,7 @@ export function ConfirmReceipt({ dealId, appId, amountUSDC, buyerWallet, onSucce
   const [done, setDone] = useState(false)
   const [txId, setTxId] = useState('')
   const [confirmed, setConfirmed] = useState(false)
+  const { activeAddress, signTransactions } = useWallet()
 
   async function handleConfirm() {
     if (!confirmed) return
@@ -28,9 +29,11 @@ export function ConfirmReceipt({ dealId, appId, amountUSDC, buyerWallet, onSucce
     setLoading(true)
 
     try {
-      const peraWallet = getPeraWallet()
-      const accounts = await peraWallet.reconnectSession()
-      const buyerAddr = accounts[0]
+      if (!activeAddress) {
+        throw new Error('Please connect your Wallet first.')
+      }
+
+      const buyerAddr = activeAddress
 
       if (buyerAddr !== buyerWallet) {
         throw new Error('Connected wallet does not match buyer wallet for this deal.')
@@ -45,8 +48,9 @@ export function ConfirmReceipt({ dealId, appId, amountUSDC, buyerWallet, onSucce
         suggestedParams: params,
       })
 
-      const signedTxns = await peraWallet.signTransaction([[{ txn: confirmTxn, signers: [buyerAddr] }]])
-      const { txid } = await algodClient.sendRawTransaction(signedTxns).do()
+      const signedTxns = await signTransactions([confirmTxn.toByte()])
+      const validTxns = signedTxns.filter((tx): tx is Uint8Array => tx !== null)
+      const { txid } = await algodClient.sendRawTransaction(validTxns).do()
       setTxId(txid)
       await algosdk.waitForConfirmation(algodClient, txid, 4)
 

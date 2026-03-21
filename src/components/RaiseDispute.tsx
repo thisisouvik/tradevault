@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { AlertTriangle, AlertCircle } from 'lucide-react'
-import { getPeraWallet } from '@/lib/wallet'
+import { useWallet } from '@txnlab/use-wallet-react'
 import { algodClient } from '@/lib/algorand'
 import algosdk from 'algosdk'
 
@@ -19,14 +19,17 @@ export function RaiseDispute({ dealId, appId, buyerWallet, onSuccess }: RaiseDis
   const [error, setError] = useState('')
   const [confirmed, setConfirmed] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const { activeAddress, signTransactions } = useWallet()
 
   async function handleDispute() {
     setError('')
     setLoading(true)
     try {
-      const peraWallet = getPeraWallet()
-      const accounts = await peraWallet.reconnectSession()
-      const buyerAddr = accounts[0]
+      if (!activeAddress) {
+        throw new Error('Please connect your Wallet first.')
+      }
+
+      const buyerAddr = activeAddress
 
       if (buyerAddr !== buyerWallet) {
         throw new Error('Connected wallet does not match buyer wallet for this deal.')
@@ -41,8 +44,9 @@ export function RaiseDispute({ dealId, appId, buyerWallet, onSuccess }: RaiseDis
         suggestedParams: params,
       })
 
-      const signedTxns = await peraWallet.signTransaction([[{ txn: disputeTxn, signers: [buyerAddr] }]])
-      const { txid } = await algodClient.sendRawTransaction(signedTxns).do()
+      const signedTxns = await signTransactions([disputeTxn.toByte()])
+      const validTxns = signedTxns.filter((tx): tx is Uint8Array => tx !== null)
+      const { txid } = await algodClient.sendRawTransaction(validTxns).do()
       await algosdk.waitForConfirmation(algodClient, txid, 4)
 
       await fetch(`/api/deals/${dealId}`, {

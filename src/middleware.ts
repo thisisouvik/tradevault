@@ -23,30 +23,53 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session if expired
   const { data: { user } } = await supabase.auth.getUser()
+  const { pathname } = request.nextUrl
 
-  const protectedRoutes = ['/dashboard', '/deal', '/arbitrator']
-  const isProtected = protectedRoutes.some(route =>
-    request.nextUrl.pathname.startsWith(route)
-  )
+  // ── 1. Protected routes (require any auth) ────────────────────────────────
+  const protectedRoutes = ['/dashboard', '/deal', '/arbitrator', '/profile']
+  const isProtected = protectedRoutes.some(route => pathname.startsWith(route))
 
   if (isProtected && !user) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/signin'
-    url.searchParams.set('redirectTo', request.nextUrl.pathname)
+    url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
   }
 
-  // Redirect authenticated users away from auth pages
+  // ── 2. Redirect authenticated users away from auth pages ──────────────────
   const authRoutes = ['/auth/signin', '/auth/signup']
-  const isAuthRoute = authRoutes.some(route =>
-    request.nextUrl.pathname.startsWith(route)
-  )
+  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
   if (isAuthRoute && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  // ── 3. Role-based guards (require DB lookup) ──────────────────────────────
+  // Only enforce for seller/buyer-specific routes
+  if (user && (pathname.startsWith('/deal/new') || pathname.startsWith('/arbitrator'))) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const role = profile?.role
+
+    // Only sellers can create deals
+    if (pathname.startsWith('/deal/new') && role !== 'seller') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+
+    // Only arbitrators can access /arbitrator/*
+    if (pathname.startsWith('/arbitrator') && role !== 'arbitrator') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

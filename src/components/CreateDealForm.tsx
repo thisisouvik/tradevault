@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { PackagePlus, DollarSign, Clock, Mail, FileText, AlertCircle, CheckCircle2, Shield } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { getPeraWallet } from '@/lib/wallet'
+import { useWallet } from '@txnlab/use-wallet-react'
 import { algodClient, USDC_ASSET_ID } from '@/lib/algorand'
 import algosdk from 'algosdk'
 
 export default function CreateDealForm() {
   const router = useRouter()
   const supabase = createClient()
+  const { activeAddress, signTransactions } = useWallet()
 
   const [form, setForm] = useState({
     itemName: '',
@@ -56,14 +57,12 @@ export default function CreateDealForm() {
         .eq('id', user.id)
         .single()
 
-      if (!profile?.wallet_address) {
-        throw new Error('Please connect your Pera Wallet from the dashboard first.')
+      if (!profile?.wallet_address || !activeAddress) {
+        throw new Error('Please connect your Wallet from the dashboard first.')
       }
 
       // Build contract creation transaction
-      const peraWallet = getPeraWallet()
-      const accounts = await peraWallet.reconnectSession()
-      const sellerAddress = accounts[0] || profile.wallet_address
+      const sellerAddress = activeAddress
 
       const params = await algodClient.getTransactionParams().do()
       const amountMicro = parseInt(form.amountUSDC) * 1_000_000
@@ -89,8 +88,9 @@ export default function CreateDealForm() {
         ),
       })
 
-      const signedTxns = await peraWallet.signTransaction([[{ txn: appCreateTxn, signers: [sellerAddress] }]])
-      const { txid } = await algodClient.sendRawTransaction(signedTxns).do()
+      const signedTxns = await signTransactions([appCreateTxn.toByte()])
+      const validTxns = signedTxns.filter((tx): tx is Uint8Array => tx !== null)
+      const { txid } = await algodClient.sendRawTransaction(validTxns).do()
       setTxId(txid)
 
       const confirmation = await algosdk.waitForConfirmation(algodClient, txid, 4)
@@ -148,7 +148,7 @@ export default function CreateDealForm() {
         </h2>
         <p className="text-[#6B7280] text-sm max-w-sm">
           {step === 'deploying'
-            ? 'Approve the transaction in your Pera Wallet. This creates the immutable smart contract on Algorand TestNet.'
+            ? 'Approve the transaction in your Wallet. This creates the immutable smart contract on Algorand TestNet.'
             : 'Contract confirmed. Saving deal to database and sending email to buyer...'}
         </p>
         {txId && (

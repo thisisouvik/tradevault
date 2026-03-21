@@ -46,10 +46,10 @@ export function HeroSection() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-[#111827] leading-[1.05] mb-6"
         >
-          Trade with strangers.{' '}
+          Trade<span className="text-[#2563EB]">Vault</span>.{' '}
           <br className="hidden sm:block" />
-          <span className="text-[#2563EB]">
-            Trust the contract.
+          <span className="text-[#2563EB]" style={{fontSize:'0.9em'}}>
+            Trustless Trade on Algorand.
           </span>
         </motion.h1>
 

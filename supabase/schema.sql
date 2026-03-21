@@ -1,5 +1,3 @@
-// Supabase Database Schema — Execute in Supabase SQL Editor
-// Run this SQL in your Supabase project dashboard → SQL Editor
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -21,6 +19,7 @@ CREATE TABLE public.profiles (
   id            UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name          TEXT NOT NULL,
   email         TEXT NOT NULL UNIQUE,
+  role          TEXT NOT NULL DEFAULT 'seller' CHECK (role IN ('seller', 'buyer', 'arbitrator')),
   wallet_address TEXT,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
@@ -115,11 +114,12 @@ CREATE POLICY "Arbitrators can insert" ON public.arbitration
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, name, email)
+  INSERT INTO public.profiles (id, name, email, role)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
-    NEW.email
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'role', 'seller')
   );
   RETURN NEW;
 END;

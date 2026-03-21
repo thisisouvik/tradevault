@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Wallet, Zap, AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { getPeraWallet } from '@/lib/wallet'
+import { useWallet } from '@txnlab/use-wallet-react'
 import { algodClient, USDC_ASSET_ID } from '@/lib/algorand'
 import algosdk from 'algosdk'
 
@@ -23,21 +23,17 @@ export function FundEscrow({ dealId, appId, appAddress, amountUSDC, buyerWallet,
   const [txId, setTxId] = useState('')
   const [done, setDone] = useState(false)
   const supabase = createClient()
+  const { activeAddress, signTransactions } = useWallet()
 
   async function handleFund() {
     setError('')
     setLoading(true)
     try {
-      const peraWallet = getPeraWallet()
-      const accounts = await peraWallet.reconnectSession().catch(() => [])
-
-      if (!accounts[0]) {
-        const newAccounts = await peraWallet.connect()
-        if (!newAccounts[0]) throw new Error('Please connect your Pera Wallet first.')
+      if (!activeAddress) {
+        throw new Error('Please connect your Wallet first.')
       }
 
-      const connectedAccounts = accounts[0] ? accounts : await peraWallet.reconnectSession()
-      const buyerAddr = connectedAccounts[0]
+      const buyerAddr = activeAddress
 
       if (buyerAddr !== buyerWallet) {
         throw new Error(`This deal is assigned to wallet ${buyerWallet.slice(0,8)}... — your connected wallet doesn't match.`)
@@ -66,14 +62,10 @@ export function FundEscrow({ dealId, appId, appAddress, amountUSDC, buyerWallet,
       // Group atomically
       algosdk.assignGroupID([acceptTxn, fundTxn])
 
-      // Sign via Pera — user sees ONE approval for both txns
-      const signedTxns = await peraWallet.signTransaction([
-        [
-          { txn: acceptTxn, signers: [buyerAddr] },
-          { txn: fundTxn, signers: [buyerAddr] }
-        ]
-      ])
-      const { txid } = await algodClient.sendRawTransaction(signedTxns).do()
+      // Sign via Wallet — user sees ONE approval for both txns
+      const signedTxns = await signTransactions([acceptTxn.toByte(), fundTxn.toByte()])
+      const validTxns = signedTxns.filter((tx): tx is Uint8Array => tx !== null)
+      const { txid } = await algodClient.sendRawTransaction(validTxns).do()
       setTxId(txid)
 
       await algosdk.waitForConfirmation(algodClient, txid, 4)
@@ -117,7 +109,7 @@ export function FundEscrow({ dealId, appId, appAddress, amountUSDC, buyerWallet,
     <div className="space-y-4">
       <div className="rounded-xl p-4" style={{ background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)' }}>
         <p className="text-sm text-[#8ca0b3]">
-          Clicking below will request <strong className="text-white">two atomic transactions</strong> in Pera Wallet:
+          Clicking below will request <strong className="text-white">two atomic transactions</strong> in your Wallet:
           your acceptance signature + <strong className="text-[#a855f7]">${amountUSDC} USDC transfer</strong> to the contract address.
           Both succeed or neither does.
         </p>
@@ -154,7 +146,7 @@ export function FundEscrow({ dealId, appId, appAddress, amountUSDC, buyerWallet,
               transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
               className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
             />
-            Waiting for Pera Wallet...
+            Waiting for Wallet...
           </>
         ) : (
           <>

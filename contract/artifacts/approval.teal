@@ -1,0 +1,452 @@
+#pragma version 10
+
+// TrustEscrow Smart Contract — TradeVault
+// Global State: seller(addr), buyer(addr), amount(uint), deadline(uint),
+//               dispute_end(uint), state(uint), tracking_hash(bytes), delivered_at(uint)
+// States: PROPOSED=0, ACCEPTED=1, FUNDED=2, DELIVERED=3, COMPLETED=4, DISPUTED=5, RESOLVED=6
+
+// Route based on create vs call
+txn ApplicationID
+int 0
+==
+bnz handle_create
+
+// NoOp call — route by method selector
+txn OnCompletion
+int NoOp
+==
+bnz route_method
+
+// Allow OptIn
+txn OnCompletion
+int OptIn
+==
+bnz approve
+
+// Allow DeleteApplication by creator only
+txn OnCompletion
+int DeleteApplication
+==
+bnz handle_delete
+
+err
+
+approve:
+int 1
+return
+
+handle_delete:
+txn Sender
+global CreatorAddress
+==
+return
+
+// ============================================================
+// CREATE — bare creation, no args needed
+// Initializes empty state. Caller must then call propose().
+// ============================================================
+handle_create:
+byte "state"
+int 0
+app_global_put
+
+byte "amount"
+int 0
+app_global_put
+
+byte "deadline"
+int 0
+app_global_put
+
+byte "dispute_end"
+int 0
+app_global_put
+
+byte "delivered_at"
+int 0
+app_global_put
+
+byte "tracking_hash"
+byte ""
+app_global_put
+
+byte "seller"
+global ZeroAddress
+app_global_put
+
+byte "buyer"
+global ZeroAddress
+app_global_put
+
+int 1
+return
+
+// ============================================================
+// METHOD ROUTING
+// ============================================================
+route_method:
+txna ApplicationArgs 0
+byte "propose"
+==
+bnz method_propose
+
+txna ApplicationArgs 0
+byte "accept"
+==
+bnz method_accept
+
+txna ApplicationArgs 0
+byte "fund"
+==
+bnz method_fund
+
+txna ApplicationArgs 0
+byte "submit_delivery"
+==
+bnz method_submit_delivery
+
+txna ApplicationArgs 0
+byte "confirm"
+==
+bnz method_confirm
+
+txna ApplicationArgs 0
+byte "timeout_release"
+==
+bnz method_timeout_release
+
+txna ApplicationArgs 0
+byte "dispute"
+==
+bnz method_dispute
+
+txna ApplicationArgs 0
+byte "resolve_dispute"
+==
+bnz method_resolve_dispute
+
+err
+
+// ============================================================
+// PROPOSE — seller sets deal terms after deployment
+// Args: arg1=buyer_addr(32b), arg2=amount, arg3=deadline_days
+// ============================================================
+method_propose:
+// Only allow if state is still 0 (not yet proposed) and seller not set
+byte "seller"
+app_global_get
+global ZeroAddress
+==
+assert
+
+// Store seller = sender
+byte "seller"
+txn Sender
+app_global_put
+
+// Store buyer = arg 1 (32 byte address)
+byte "buyer"
+txna ApplicationArgs 1
+app_global_put
+
+// Store amount = arg 2
+byte "amount"
+txna ApplicationArgs 2
+btoi
+app_global_put
+
+// Store deadline = now + (arg3 * 86400)
+byte "deadline"
+global LatestTimestamp
+txna ApplicationArgs 3
+btoi
+int 86400
+*
++
+app_global_put
+
+// State stays PROPOSED (0)
+int 1
+return
+
+// ============================================================
+// ACCEPT — only buyer, state must be PROPOSED (0)
+// ============================================================
+method_accept:
+txn Sender
+byte "buyer"
+app_global_get
+==
+assert
+
+byte "state"
+app_global_get
+int 0
+==
+assert
+
+// Verify seller is set (contract was proposed)
+byte "seller"
+app_global_get
+global ZeroAddress
+!=
+assert
+
+byte "state"
+int 1
+app_global_put
+
+int 1
+return
+
+// ============================================================
+// FUND — only buyer, state must be ACCEPTED (1)
+// ============================================================
+method_fund:
+txn Sender
+byte "buyer"
+app_global_get
+==
+assert
+
+byte "state"
+app_global_get
+int 1
+==
+assert
+
+byte "state"
+int 2
+app_global_put
+
+int 1
+return
+
+// ============================================================
+// SUBMIT_DELIVERY — state FUNDED (2), before deadline
+// ============================================================
+method_submit_delivery:
+byte "state"
+app_global_get
+int 2
+==
+assert
+
+global LatestTimestamp
+byte "deadline"
+app_global_get
+<=
+assert
+
+byte "tracking_hash"
+txna ApplicationArgs 1
+app_global_put
+
+byte "delivered_at"
+global LatestTimestamp
+app_global_put
+
+byte "dispute_end"
+global LatestTimestamp
+int 604800
++
+app_global_put
+
+byte "state"
+int 3
+app_global_put
+
+int 1
+return
+
+// ============================================================
+// CONFIRM — only buyer, state DELIVERED (3)
+// Inner txn: send full USDC to seller
+// ============================================================
+method_confirm:
+txn Sender
+byte "buyer"
+app_global_get
+==
+assert
+
+byte "state"
+app_global_get
+int 3
+==
+assert
+
+itxn_begin
+int axfer
+itxn_field TypeEnum
+int 10458941
+itxn_field XferAsset
+byte "seller"
+app_global_get
+itxn_field AssetReceiver
+byte "amount"
+app_global_get
+itxn_field AssetAmount
+int 1000
+itxn_field Fee
+itxn_submit
+
+byte "state"
+int 4
+app_global_put
+
+int 1
+return
+
+// ============================================================
+// TIMEOUT_RELEASE — state DELIVERED, past dispute window
+// ============================================================
+method_timeout_release:
+byte "state"
+app_global_get
+int 3
+==
+assert
+
+global LatestTimestamp
+byte "dispute_end"
+app_global_get
+>
+assert
+
+itxn_begin
+int axfer
+itxn_field TypeEnum
+int 10458941
+itxn_field XferAsset
+byte "seller"
+app_global_get
+itxn_field AssetReceiver
+byte "amount"
+app_global_get
+itxn_field AssetAmount
+int 1000
+itxn_field Fee
+itxn_submit
+
+byte "state"
+int 4
+app_global_put
+
+int 1
+return
+
+// ============================================================
+// DISPUTE — only buyer, state DELIVERED, within window
+// ============================================================
+method_dispute:
+txn Sender
+byte "buyer"
+app_global_get
+==
+assert
+
+byte "state"
+app_global_get
+int 3
+==
+assert
+
+global LatestTimestamp
+byte "dispute_end"
+app_global_get
+<=
+assert
+
+byte "state"
+int 5
+app_global_put
+
+int 1
+return
+
+// ============================================================
+// RESOLVE_DISPUTE — state DISPUTED, split USDC
+// Args: arg1=seller_pct, arg2=buyer_pct (must sum to 100)
+// ============================================================
+method_resolve_dispute:
+byte "state"
+app_global_get
+int 5
+==
+assert
+
+txna ApplicationArgs 1
+btoi
+txna ApplicationArgs 2
+btoi
++
+int 100
+==
+assert
+
+// seller_amount = (amount * seller_pct) / 100
+byte "amount"
+app_global_get
+txna ApplicationArgs 1
+btoi
+*
+int 100
+/
+store 0
+
+// buyer_amount = amount - seller_amount
+byte "amount"
+app_global_get
+load 0
+-
+store 1
+
+// Pay seller if > 0
+load 0
+int 0
+>
+bz skip_seller_pay
+
+itxn_begin
+int axfer
+itxn_field TypeEnum
+int 10458941
+itxn_field XferAsset
+byte "seller"
+app_global_get
+itxn_field AssetReceiver
+load 0
+itxn_field AssetAmount
+int 1000
+itxn_field Fee
+itxn_submit
+
+skip_seller_pay:
+// Pay buyer if > 0
+load 1
+int 0
+>
+bz skip_buyer_pay
+
+itxn_begin
+int axfer
+itxn_field TypeEnum
+int 10458941
+itxn_field XferAsset
+byte "buyer"
+app_global_get
+itxn_field AssetReceiver
+load 1
+itxn_field AssetAmount
+int 1000
+itxn_field Fee
+itxn_submit
+
+skip_buyer_pay:
+byte "state"
+int 6
+app_global_put
+
+int 1
+return

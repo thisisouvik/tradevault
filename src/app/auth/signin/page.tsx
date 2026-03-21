@@ -26,6 +26,7 @@ function SignInForm() {
     setError('')
     setLoading(true)
 
+    // Normal user login route
     const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
@@ -71,7 +72,7 @@ function SignInForm() {
               <Shield className="w-5 h-5 text-white" />
             </div>
             <span className="text-2xl font-bold tracking-tight text-[#111827]">
-              Trust<span className="text-[#2563EB]">Escrow</span>
+              Trade<span className="text-[#2563EB]">Vault</span>
             </span>
           </Link>
           <p className="mt-3 text-[#6B7280] font-medium">Sign in to your account</p>

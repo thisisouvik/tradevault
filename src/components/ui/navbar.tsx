@@ -50,7 +50,7 @@ export default function Navbar() {
                 <Shield className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-bold tracking-tight text-[#111827]">
-                Trust<span className="text-[#2563EB]">Escrow</span>
+                Trade<span className="text-[#2563EB]">Vault</span>
               </span>
             </Link>
 
