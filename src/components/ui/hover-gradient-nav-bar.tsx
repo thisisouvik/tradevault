@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { Search } from 'lucide-react';
 
 const menuItems = [
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Features", href: "#features" },
-  { label: "Why Algorand?", href: "#algorand" },
+  { label: "How it works", href: "/#how-it-works" },
+  { label: "Features", href: "/#features" },
+  { label: "Why Algorand?", href: "/why-algorand" },
 ];
 
 function HoverGradientNavBar() {
