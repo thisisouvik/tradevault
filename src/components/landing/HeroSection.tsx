@@ -3,8 +3,28 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export function HeroSection() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    
+    // Initial check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session)
+    })
+    
+    // Listen for login/logout events live
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session)
+    })
+    
+    return () => subscription.unsubscribe()
+  }, [])
+
   return (
     <section className="bg-[#D6EFF9] pt-16 pb-0 relative overflow-hidden min-h-[580px]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
@@ -28,10 +48,10 @@ export function HeroSection() {
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/auth/signup"
+                href={isAuthenticated ? "/dashboard" : "/auth/signup"}
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg text-base font-semibold text-white bg-[#05445E] hover:bg-[#189AB4] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
               >
-                Get started — it's free
+                {isAuthenticated ? "Go to Dashboard" : "Get started — it's free"}
                 <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
