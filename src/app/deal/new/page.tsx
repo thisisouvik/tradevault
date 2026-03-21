@@ -25,7 +25,7 @@ export default async function NewDealPage() {
         </Link>
         <div className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-[#2563EB]" />
-          <span className="text-sm font-bold text-[#111827] hidden sm:block">TrustEscrow</span>
+          <span className="text-sm font-bold text-[#111827] hidden sm:block">TradeVault</span>
         </div>
       </header>
 

@@ -112,3 +112,29 @@ h1, h2, h3, h4, h5, h6 {
 .btn-primary:hover {
   opacity: 0.9;
 }
+
+.section-fade-in,
+.section-fade-in-left,
+.section-fade-in-right {
+  opacity: 0;
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.section-fade-in {
+  transform: translateY(32px);
+}
+
+.section-fade-in-left {
+  transform: translateX(-40px);
+}
+
+.section-fade-in-right {
+  transform: translateX(40px);
+}
+
+.section-fade-in.animate-in-view,
+.section-fade-in-left.animate-in-view,
+.section-fade-in-right.animate-in-view {
+  opacity: 1;
+  transform: translate(0, 0);
+}
