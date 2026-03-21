@@ -1,6 +1,6 @@
 {
-  "name": "tradevault",
-  "version": "0.1.0",
+  "name": "trustescrow",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,21 +10,23 @@
   },
   "dependencies": {
     "@perawallet/connect": "^1.5.1",
-    "@prisma/client": "^7.5.0",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-dropdown-menu": "^2.1.15",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-select": "^2.2.5",
     "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tabs": "^1.1.12",
+    "@radix-ui/react-toast": "^1.2.14",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.50.0",
     "algosdk": "^3.5.2",
-    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
-    "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.577.0",
-    "next": "16.2.1",
-    "next-auth": "^4.24.13",
-    "nodemailer": "^7.0.13",
-    "prisma": "^7.5.0",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
+    "next": "15.3.1",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
@@ -33,7 +35,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.1",
+    "eslint-config-next": "15.3.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

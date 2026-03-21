@@ -1,17 +1,43 @@
+'use client'
+
+import { motion } from 'framer-motion'
+
+const logos = [
+  { name: 'Algorand', color: '#111827' },
+  { name: 'USDC', color: '#2563EB' },
+  { name: 'Pera Wallet', color: '#F59E0B' },
+  { name: 'TrackingMore', color: '#8B5CF6' },
+  { name: 'Supabase', color: '#10B981' },
+  { name: 'Vercel', color: '#111827' },
+]
+
 export function PartnersSection() {
   return (
-    <section className="bg-slate-50 py-12 border-t border-b border-slate-100">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <p className="text-center text-sm font-semibold text-slate-500 mb-8 uppercase tracking-widest">
-          Trusted by global logistics leaders
+    <section className="py-12 relative overflow-hidden bg-white border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p className="text-center text-xs font-semibold uppercase tracking-widest text-[#6B7280] mb-8">
+          Powered by
         </p>
-        <div className="flex flex-wrap justify-center gap-x-12 gap-y-8 lg:gap-x-24 items-center">
-          <div className="text-2xl font-black text-slate-300 italic tracking-tighter">DHL</div>
-          <div className="text-2xl font-bold text-slate-300 tracking-tight">FedEx</div>
-          <div className="text-2xl font-bold text-slate-300">aramex</div>
-          <div className="text-2xl font-bold text-slate-300 italic">BlueDart</div>
+        <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
+          {logos.map((logo, i) => (
+            <motion.div
+              key={logo.name}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.07 }}
+              className="px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide"
+              style={{
+                background: `${logo.color}08`,
+                border: `1px solid ${logo.color}15`,
+                color: logo.color,
+              }}
+            >
+              {logo.name}
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
-  );
+  )
 }
