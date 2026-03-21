@@ -63,7 +63,8 @@ function HoverGradientNavBar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
 
         {/* Logo */}
-        <Link href="/" onClick={() => setMobileMenuOpen(false)} className="font-extrabold text-2xl tracking-tighter text-[#05445E] hover:text-[#189AB4] transition-colors relative z-50">
+        <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 font-extrabold text-2xl tracking-tighter text-[#05445E] hover:text-[#189AB4] transition-colors relative z-50">
+          <img src="/logo.png" alt="TradeVault Logo" className="w-8 h-8 object-contain" />
           TradeVault
         </Link>
 

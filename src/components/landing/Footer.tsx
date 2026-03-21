@@ -18,7 +18,8 @@ export function Footer() {
         {/* Top Header */}
         <div className="flex flex-col items-center md:items-start mb-10">
           {/* Logo */}
-          <Link href="/" className="font-extrabold text-3xl tracking-wide text-white">
+          <Link href="/" className="flex items-center gap-2 font-extrabold text-3xl tracking-wide text-white">
+            <img src="/logo.png" alt="TradeVault Logo" className="w-10 h-10 object-contain" />
             TradeVault
           </Link>
           <p className="mt-2 text-[#D6EFF9] opacity-80 max-w-sm text-center md:text-left">

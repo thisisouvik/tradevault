@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     description: 'Decentralized escrow for cross-border trade. No banks. No middlemen.',
     type: 'website',
   },
+  icons: {
+    icon: '/logo.png',
+  },
 }
 
 import { Providers } from '@/components/Providers'
