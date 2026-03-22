@@ -148,6 +148,17 @@ export default function ArbitratorReviewClient({
   const sellerEvidence = evidence.filter((e) => e.submitted_by === 'seller')
   const buyerEvidence  = evidence.filter((e) => e.submitted_by === 'buyer')
 
+  // Inject initial delivery evidence if the seller provided photos when shipping
+  if (deal.evidence_urls && deal.evidence_urls.length > 0) {
+    sellerEvidence.unshift({
+      id: 'delivery-proof',
+      submitted_by: 'seller',
+      description: 'Initial Shipping Proof (Package Photos / Labels)',
+      photo_urls: deal.evidence_urls,
+      created_at: deal.delivered_at || deal.updated_at || deal.created_at,
+    })
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
 

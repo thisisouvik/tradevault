@@ -29,7 +29,12 @@ export default async function ArbitratorPage({ params }: PageProps) {
     redirect(`/dashboard`)
   }
 
-  const { data: deal } = await supabase
+  // Use admin client to bypass RLS so the arbitrator can definitely see both
+  // sides of the evidence, regardless of RLS policies on the evidence table.
+  const { createAdminClient } = await import('@/lib/supabase/admin')
+  const admin = createAdminClient()
+
+  const { data: deal } = await admin
     .from('deals')
     .select(`*, profiles:seller_id (name, email, wallet_address), evidence (*)`)
     .eq('id', id)

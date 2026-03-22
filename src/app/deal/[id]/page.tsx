@@ -64,7 +64,7 @@ export default async function DealPage({ params }: PageProps) {
   const isBuyer = user.email === deal.buyer_email
   const isArbitrator = profile?.role === 'arbitrator'
 
-  const { data: evidence } = (deal.status === 'DISPUTED' || deal.status === 'RESOLVED')
+  const { data: evidence } = (deal.status === 'DELIVERED' || deal.status === 'DISPUTED' || deal.status === 'RESOLVED')
     ? await supabase.from('evidence').select('*').eq('deal_id', id).order('created_at')
     : { data: [] }
 

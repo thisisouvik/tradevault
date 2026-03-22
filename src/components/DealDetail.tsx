@@ -231,16 +231,49 @@ export function DealDetailClient({
             )}
 
             {isSeller && (
-              <div className="bg-yellow-50 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center gap-5 border border-yellow-200 shadow-sm">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-yellow-100 flex-shrink-0">
-                  <Clock className="w-6 h-6 text-yellow-500" />
+              <div className="space-y-6">
+                <div className="bg-yellow-50 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center gap-5 border border-yellow-200 shadow-sm">
+                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-yellow-100 flex-shrink-0">
+                    <Clock className="w-6 h-6 text-yellow-500" />
+                  </div>
+                  <div>
+                    <p className="text-base font-extrabold text-yellow-900">Waiting for buyer to confirm</p>
+                    <p className="text-sm text-yellow-700/80 mt-1 font-medium">
+                      If they don't confirm or dispute within <span className="font-bold text-yellow-800">{deal.dispute_window_days} days</span>, funds auto-release to you.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-base font-extrabold text-yellow-900">Waiting for buyer to confirm</p>
-                  <p className="text-sm text-yellow-700/80 mt-1 font-medium">
-                    If they don't confirm or dispute within <span className="font-bold text-yellow-800">{deal.dispute_window_days} days</span>, funds auto-release to you.
-                  </p>
-                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* DISPUTED — show evidence upload for buyer only */}
+        {deal.status === 'DISPUTED' && (
+          <motion.div
+            key="disputed"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="bg-red-50 rounded-2xl p-6 border border-red-200 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-400/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="flex items-center gap-3 relative z-10 mb-2">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+                <h3 className="text-lg font-extrabold text-red-900">Dispute in Progress</h3>
+              </div>
+              <p className="text-sm text-red-700/80 font-medium relative z-10">
+                Funds are frozen. An independent arbitrator is reviewing the case. Please upload any necessary evidence below.
+              </p>
+            </div>
+
+            {isBuyer && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <h3 className="text-lg font-extrabold text-[#05445E] mb-2">Submit Additional Evidence</h3>
+                <p className="text-sm text-slate-500 mb-6 font-medium">
+                  Upload photos, chat screenshots, or tracking receipts to support your case.
+                </p>
+                <EvidenceUpload dealId={deal.id} role="buyer" onSuccess={refresh} />
               </div>
             )}
           </motion.div>
@@ -261,68 +294,6 @@ export function DealDetailClient({
             <p className="text-sm font-medium text-green-800/80 max-w-sm mx-auto relative z-10">
               <span className="font-extrabold text-green-700">${deal.amount_usdc} USDC</span> has been securely released to the seller. This deal is permanently and immutably archived on the Algorand blockchain.
             </p>
-          </motion.div>
-        )}
-
-        {/* DISPUTED */}
-        {deal.status === 'DISPUTED' && (
-          <motion.div
-            key="disputed"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            <div className="bg-red-50 rounded-2xl p-6 flex items-start gap-4 border border-red-200 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-red-400/10 rounded-full blur-3xl pointer-events-none" />
-              <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0 relative z-10" />
-              <div className="relative z-10">
-                <p className="text-base font-extrabold text-red-900">Dispute in progress</p>
-                <p className="text-sm text-red-700/80 mt-1 font-medium">
-                  Submit evidence below. An independent arbitrator will review and cryptographically execute the verdict on-chain.
-                </p>
-              </div>
-            </div>
-
-            {/* Evidence submission */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-              <h3 className="text-lg font-extrabold text-[#05445E] mb-6">Submit Evidence</h3>
-              <EvidenceUpload
-                dealId={deal.id}
-                role={isSeller ? 'seller' : 'buyer'}
-                onSuccess={refresh}
-              />
-            </div>
-
-            {/* Existing evidence */}
-            {evidence.length > 0 && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                <p className="text-base font-extrabold text-[#05445E] mb-6">Submitted Evidence Library</p>
-                <div className="space-y-4">
-                  {evidence.map(ev => (
-                    <div
-                      key={ev.id}
-                      className="p-5 rounded-xl bg-slate-50 border border-slate-200 shadow-sm relative overflow-hidden"
-                    >
-                      <div className={`absolute top-0 left-0 w-1 h-full ${ev.submitted_by === 'seller' ? 'bg-[#189AB4]' : 'bg-[#05445E]'}`} />
-                      <p className="text-[10px] font-black uppercase tracking-widest mb-3 ml-2"
-                        style={{ color: ev.submitted_by === 'seller' ? '#189AB4' : '#05445E' }}>
-                        {ev.submitted_by} <span className="text-slate-400 font-medium ml-1">· {new Date(ev.created_at).toLocaleDateString()}</span>
-                      </p>
-                      <p className="text-sm text-slate-700 leading-relaxed mb-4 ml-2 font-medium">{ev.description}</p>
-                      {ev.photo_urls.length > 0 && (
-                        <div className="flex gap-3 flex-wrap ml-2">
-                          {ev.photo_urls.map((url, i) => (
-                            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-xl overflow-hidden shadow-sm border border-slate-200">
-                              <img src={url} alt="Evidence" className="w-full h-full object-cover hover:scale-110 transition-transform duration-300" />
-                            </a>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </motion.div>
         )}
 
@@ -364,6 +335,37 @@ export function DealDetailClient({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Existing evidence — Universally visible when evidence exists */}
+      {evidence.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mt-6">
+          <p className="text-base font-extrabold text-[#05445E] mb-6">Submitted Evidence Library</p>
+          <div className="space-y-4">
+            {evidence.map(ev => (
+              <div
+                key={ev.id}
+                className="p-5 rounded-xl bg-slate-50 border border-slate-200 shadow-sm relative overflow-hidden"
+              >
+                <div className={`absolute top-0 left-0 w-1 h-full ${ev.submitted_by === 'seller' ? 'bg-[#189AB4]' : 'bg-[#05445E]'}`} />
+                <p className="text-[10px] font-black uppercase tracking-widest mb-3 ml-2"
+                  style={{ color: ev.submitted_by === 'seller' ? '#189AB4' : '#05445E' }}>
+                  {ev.submitted_by} <span className="text-slate-400 font-medium ml-1">· {new Date(ev.created_at).toLocaleDateString('en-GB', { dateStyle: 'medium' })}</span>
+                </p>
+                <p className="text-sm text-slate-700 leading-relaxed mb-4 ml-2 font-medium">{ev.description}</p>
+                {ev.photo_urls.length > 0 && (
+                  <div className="flex gap-3 flex-wrap ml-2">
+                    {ev.photo_urls.map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-xl overflow-hidden shadow-sm border border-slate-200">
+                        <img src={url} alt="Evidence photo" className="w-full h-full object-cover hover:scale-110 transition-transform duration-300" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
