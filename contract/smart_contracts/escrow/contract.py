@@ -58,6 +58,32 @@ class TrustEscrow(ARC4Contract):
         self.state.value = PROPOSED
 
     @arc4.abimethod
+    def bootstrap(self) -> None:
+        """
+        Called by seller AFTER deployment to opt the contract account into USDC.
+        Must be grouped atomically with a payment of >= 0.2 ALGO to this app's address
+        to cover the Minimum Balance Requirement (MBR) for holding the ASA.
+
+        Algorand requires every account — including smart contracts — to opt-in
+        to an ASA before it can receive or hold that asset.
+
+        Atomic group (seller sends):
+          txn[0] → Payment: 0.2 ALGO → app address  (MBR + fee buffer)
+          txn[1] → App call: bootstrap()             (this method)
+        """
+        assert Txn.sender == self.seller.value.native, "Only seller can bootstrap"
+        assert self.seller.value.native != Global.zero_address, "Contract not yet proposed"
+        # Verify MBR payment is in the group (txn[0])
+        assert Global.group_size == UInt64(2), "Must be grouped with MBR payment"
+        # Perform inner transaction: opt contract account into USDC
+        itxn.AssetTransfer(
+            xfer_asset=USDC_ASSET_ID,
+            asset_receiver=Global.current_application_address,
+            asset_amount=UInt64(0),  # 0-amount self-transfer = opt-in
+            fee=UInt64(1000),
+        ).submit()
+
+    @arc4.abimethod
     def accept(self) -> None:
         """
         Called by buyer to accept the contract terms on-chain.

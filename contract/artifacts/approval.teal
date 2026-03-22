@@ -42,20 +42,38 @@ global CreatorAddress
 return
 
 // ============================================================
-// CREATE — bare creation, no args needed
-// Initializes empty state. Caller must then call propose().
+// CREATE — deployment & propose terms in one transaction
+// Args: arg0=buyer_addr(32b), arg1=amount, arg2=deadline_days
 // ============================================================
 handle_create:
 byte "state"
 int 0
 app_global_put
 
-byte "amount"
-int 0
+// Store seller = sender
+byte "seller"
+txn Sender
 app_global_put
 
+// Store buyer = arg 0 (32 byte address)
+byte "buyer"
+txna ApplicationArgs 0
+app_global_put
+
+// Store amount = arg 1
+byte "amount"
+txna ApplicationArgs 1
+btoi
+app_global_put
+
+// Store deadline = now + (arg2 * 86400)
 byte "deadline"
-int 0
+global LatestTimestamp
+txna ApplicationArgs 2
+btoi
+int 86400
+*
++
 app_global_put
 
 byte "dispute_end"
@@ -70,14 +88,6 @@ byte "tracking_hash"
 byte ""
 app_global_put
 
-byte "seller"
-global ZeroAddress
-app_global_put
-
-byte "buyer"
-global ZeroAddress
-app_global_put
-
 int 1
 return
 
@@ -85,11 +95,6 @@ return
 // METHOD ROUTING
 // ============================================================
 route_method:
-txna ApplicationArgs 0
-byte "propose"
-==
-bnz method_propose
-
 txna ApplicationArgs 0
 byte "accept"
 ==
@@ -125,47 +130,67 @@ byte "resolve_dispute"
 ==
 bnz method_resolve_dispute
 
+txna ApplicationArgs 0
+byte "bootstrap"
+==
+bnz method_bootstrap
+
 err
 
 // ============================================================
-// PROPOSE — seller sets deal terms after deployment
-// Args: arg1=buyer_addr(32b), arg2=amount, arg3=deadline_days
+// BOOTSTRAP — anyone can bootstrap the contract into USDC after deployment.
+// Typically called by the platform wallet server-side so sellers only
+// need ONE wallet approval (deploy only).
+// Must be grouped with a payment of >= 0.2 ALGO to app address
+// for minimum balance requirement (MBR) to hold the ASA.
+// Arg0: "bootstrap"
+// Group: txn[0] = pay to app addr >= 200000 microALGO
 // ============================================================
-method_propose:
-// Only allow if state is still 0 (not yet proposed) and seller not set
+method_bootstrap:
+// Contract must already be proposed (seller must be set — deal is live)
 byte "seller"
 app_global_get
 global ZeroAddress
+!=
+assert
+
+// Verify that this call is in a group (txn[0] is the MBR payment)
+global GroupSize
+int 2
 ==
 assert
 
-// Store seller = sender
-byte "seller"
-txn Sender
-app_global_put
+// Verify txn[0] is a payment to this app's account
+gtxn 0 TypeEnum
+int pay
+==
+assert
 
-// Store buyer = arg 1 (32 byte address)
-byte "buyer"
-txna ApplicationArgs 1
-app_global_put
+gtxn 0 Receiver
+global CurrentApplicationAddress
+==
+assert
 
-// Store amount = arg 2
-byte "amount"
-txna ApplicationArgs 2
-btoi
-app_global_put
+// Require at least 0.2 ALGO (200000 microALGO) for MBR
+gtxn 0 Amount
+int 200000
+>=
+assert
 
-// Store deadline = now + (arg3 * 86400)
-byte "deadline"
-global LatestTimestamp
-txna ApplicationArgs 3
-btoi
-int 86400
-*
-+
-app_global_put
+// Inner transaction: opt-in to USDC (0-amount self-transfer = opt-in)
+itxn_begin
+int axfer
+itxn_field TypeEnum
+int 10458941
+itxn_field XferAsset
+global CurrentApplicationAddress
+itxn_field AssetReceiver
+int 0
+itxn_field AssetAmount
+int 1000
+itxn_field Fee
+itxn_submit
 
-// State stays PROPOSED (0)
 int 1
 return
 

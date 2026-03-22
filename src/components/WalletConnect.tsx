@@ -16,7 +16,11 @@ export function WalletConnect({ onConnect }: WalletConnectProps) {
   const [error, setError] = useState('')
   const [showPicker, setShowPicker] = useState(false)
   const [balance, setBalance] = useState<{ algo: string; usdc: string } | null>(null)
+  const [mounted, setMounted] = useState(false)
   const supabase = createClient()
+
+  // Prevent SSR/client hydration mismatch — wallet state is client-only
+  useEffect(() => { setMounted(true) }, [])
 
   const shortAddr = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`
 
@@ -37,18 +41,18 @@ export function WalletConnect({ onConnect }: WalletConnectProps) {
       fetch(`https://testnet-api.algonode.cloud/v2/accounts/${activeAddress}`)
         .then(res => res.json())
         .then(data => {
-            let algo = '0.00'
-            let usdc = '0.00'
-            if (data.amount !== undefined) {
-               algo = (data.amount / 1_000_000).toFixed(2)
+          let algo = '0.00'
+          let usdc = '0.00'
+          if (data.amount !== undefined) {
+            algo = (data.amount / 1_000_000).toFixed(2)
+          }
+          if (data.assets) {
+            const usdcAsset = data.assets.find((a: any) => a['asset-id'] === 10458941)
+            if (usdcAsset) {
+              usdc = (usdcAsset.amount / 1_000_000).toFixed(2)
             }
-            if (data.assets) {
-               const usdcAsset = data.assets.find((a: any) => a['asset-id'] === 10458941)
-               if (usdcAsset) {
-                  usdc = (usdcAsset.amount / 1_000_000).toFixed(2)
-               }
-            }
-            setBalance({ algo, usdc })
+          }
+          setBalance({ algo, usdc })
         })
         .catch(console.error)
     } else {
@@ -63,13 +67,13 @@ export function WalletConnect({ onConnect }: WalletConnectProps) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Already connected view
-  if (activeAddress) {
+  // Already connected view (only render after client mount to avoid hydration mismatch)
+  if (mounted && activeAddress) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)' }}>
         <div className="w-2 h-2 rounded-full bg-[#4ade80] animate-pulse" />
         <span className="text-sm font-mono text-[#4ade80] font-medium">{shortAddr(activeAddress)}</span>
-        
+
         {balance && (
           <div className="flex items-center gap-2 ml-2 pl-3 border-l border-[#4ade80]/30 text-xs font-bold text-[#4ade80]">
             <span>{balance.usdc} USDC</span>
@@ -82,7 +86,7 @@ export function WalletConnect({ onConnect }: WalletConnectProps) {
           <button onClick={copyAddress} className="p-1 rounded-lg text-[#8ca0b3] hover:text-[#4ade80] transition-colors" title="Copy address">
             {copied ? <CheckCheck className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
-          <a href={`https://testnet.algoexplorer.io/address/${activeAddress}`} target="_blank" rel="noopener noreferrer" className="p-1 rounded-lg text-[#8ca0b3] hover:text-[#4ade80] transition-colors" title="View on explorer">
+          <a href={`https://lora.algokit.io/testnet/account/${activeAddress}`} target="_blank" rel="noopener noreferrer" className="p-1 rounded-lg text-[#8ca0b3] hover:text-[#4ade80] transition-colors" title="View on explorer">
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
           <button onClick={() => activeWallet?.disconnect()} className="p-1 rounded-lg text-[#8ca0b3] hover:text-red-400 transition-colors" title="Disconnect">

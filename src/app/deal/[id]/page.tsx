@@ -17,6 +17,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: `Contract ${id.slice(0, 8)}...` }
 }
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function getDeal(id: string) {
   const supabase = await createClient()
   const { data, error } = await supabase
@@ -72,6 +75,14 @@ export default async function DealPage({ params }: PageProps) {
   const dealLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/deal/${id}`
   const seller = deal.profiles as { name: string; wallet_address?: string }
 
+  // Explicitly fetch seller's wallet address — separate query is more reliable than join typing
+  const { data: sellerProfile } = await supabase
+    .from('profiles')
+    .select('wallet_address')
+    .eq('id', deal.seller_id)
+    .single()
+  const sellerWallet = sellerProfile?.wallet_address || ''
+
   return (
     <div className="min-h-screen bg-[#F7F9FC] text-slate-800 font-sans">
 
@@ -104,7 +115,7 @@ export default async function DealPage({ params }: PageProps) {
           )}
           {deal.contract_app_id && (
             <a
-              href={`https://testnet.algoexplorer.io/application/${deal.contract_app_id}`}
+              href={`https://lora.algokit.io/testnet/application/${deal.contract_app_id}`}
               target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors border border-blue-100 shadow-sm"
             >
@@ -215,7 +226,7 @@ export default async function DealPage({ params }: PageProps) {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-mono font-bold text-[#05445E]">{deal.contract_app_id}</span>
-                    <a href={`https://testnet.algoexplorer.io/application/${deal.contract_app_id}`} target="_blank" rel="noopener noreferrer" className="text-[#189AB4] hover:bg-[#189AB4]/10 p-2 rounded-lg transition-colors bg-white border border-slate-200">
+                    <a href={`https://lora.algokit.io/testnet/application/${deal.contract_app_id}`} target="_blank" rel="noopener noreferrer" className="text-[#189AB4] hover:bg-[#189AB4]/10 p-2 rounded-lg transition-colors bg-white border border-slate-200">
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -274,6 +285,8 @@ export default async function DealPage({ params }: PageProps) {
             tracking_id: deal.tracking_id,
             courier: deal.courier,
             tracking_hash: deal.tracking_hash,
+            evidence_urls: deal.evidence_urls,
+            seller_wallet: sellerWallet,
           }}
           isSeller={isSeller}
           isBuyer={isBuyer}

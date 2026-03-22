@@ -10,10 +10,10 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { dealId, courier, trackingId } = await request.json()
+    const { dealId, courier, trackingId, evidenceUrls = [] } = await request.json()
 
-    if (!dealId || !courier || !trackingId) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    if (!dealId || !courier || !trackingId || evidenceUrls.length === 0) {
+      return NextResponse.json({ error: 'Missing required fields or proof images' }, { status: 400 })
     }
 
     // Fetch deal and verify seller
@@ -28,12 +28,14 @@ export async function POST(request: NextRequest) {
     if (deal.status !== 'FUNDED') return NextResponse.json({ error: 'Deal must be in FUNDED state' }, { status: 400 })
 
     // Step 1: Verify tracking number
-    const { valid, error: trackingError } = await verifyTrackingNumber(trackingId, courier)
-    if (!valid) {
-      return NextResponse.json({ error: trackingError || 'Invalid tracking number for this carrier' }, { status: 400 })
+    if (courier !== 'INSTANT') {
+      const { valid, error: trackingError } = await verifyTrackingNumber(trackingId, courier)
+      if (!valid) {
+        return NextResponse.json({ error: trackingError || 'Invalid tracking number for this carrier' }, { status: 400 })
+      }
     }
 
-    // Step 2: Compute SHA256 hash of tracking number
+    // Step 2: Compute SHA256 hash of tracking number (or instant ID)
     const trackingHash = await sha256(trackingId)
 
     // Step 3: Call submit_delivery() on contract (platform server wallet)
@@ -43,7 +45,7 @@ export async function POST(request: NextRequest) {
         txId = await callContractMethod(
           parseInt(deal.contract_app_id),
           'submit_delivery',
-          []
+          [new TextEncoder().encode(trackingHash)]
         )
       } catch (err) {
         console.warn('Failed to call contract (continuing):', err)
@@ -60,6 +62,7 @@ export async function POST(request: NextRequest) {
         courier,
         tracking_hash: trackingHash,
         delivered_at: now,
+        evidence_urls: evidenceUrls,
       })
       .eq('id', dealId)
 

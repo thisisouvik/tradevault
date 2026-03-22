@@ -101,11 +101,18 @@ export async function callContractMethod(
   const params = await algodClient.getTransactionParams().do()
 
   // For simple no-arg calls, use application-call transaction directly
+  const encodedMethod = new TextEncoder().encode(method)
+  const appArgsList = [
+    encodedMethod,
+    ...args.map(a => a instanceof Uint8Array ? a : algosdk.encodeUint64(a as number))
+  ]
+
   const txn = algosdk.makeApplicationCallTxnFromObject({
     sender: account.addr,
     appIndex: appId,
     onComplete: algosdk.OnApplicationComplete.NoOpOC,
-    appArgs: args.length > 0 ? args.map(a => algosdk.encodeUint64(a as number)) : [],
+    appArgs: appArgsList,
+    foreignAssets: [USDC_ASSET_ID],
     suggestedParams: params,
   })
 

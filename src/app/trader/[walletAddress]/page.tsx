@@ -69,7 +69,7 @@ export default async function TraderProfilePage({ params }: PageProps) {
           <span className="font-bold text-[#111827]">TradeVault</span>
         </Link>
         <a
-          href={`https://testnet.algoexplorer.io/address/${decodedWallet}`}
+          href={`https://lora.algokit.io/testnet/account/${decodedWallet}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-xs font-semibold text-[#2563EB] hover:underline"
@@ -103,7 +103,7 @@ export default async function TraderProfilePage({ params }: PageProps) {
               <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
                 <p className="text-xs font-mono text-[#6B7280] break-all flex-1">{decodedWallet}</p>
                 <a
-                  href={`https://testnet.algoexplorer.io/address/${decodedWallet}`}
+                  href={`https://lora.algokit.io/testnet/account/${decodedWallet}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#2563EB] hover:bg-blue-50 p-1 rounded flex-shrink-0"
@@ -150,7 +150,7 @@ export default async function TraderProfilePage({ params }: PageProps) {
                 All records are written to Algorand and cannot be deleted.
               </p>
               <a
-                href={`https://testnet.algoexplorer.io/address/${decodedWallet}`}
+                href={`https://lora.algokit.io/testnet/account/${decodedWallet}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2563EB] hover:underline"

@@ -69,10 +69,9 @@ export function EvidenceUpload({ dealId, role, onSuccess }: EvidenceUploadProps)
 
   if (done) {
     return (
-      <div className="flex items-center gap-3 p-4 rounded-xl text-[#4ade80]"
-        style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)' }}>
+      <div className="flex items-center gap-3 p-4 rounded-xl text-green-700 bg-green-50 border border-green-200 shadow-sm">
         <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-        <p className="text-sm font-semibold">Evidence submitted successfully.</p>
+        <p className="text-sm font-bold">Evidence submitted successfully.</p>
       </div>
     )
   }
@@ -80,30 +79,28 @@ export function EvidenceUpload({ dealId, role, onSuccess }: EvidenceUploadProps)
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-xs font-medium text-[#8ca0b3] mb-1.5">Description *</label>
+        <label className="block text-xs font-semibold text-gray-700 mb-1.5">Description *</label>
         <textarea
           value={description}
           onChange={e => setDescription(e.target.value)}
           placeholder="Describe your issue with supporting details..."
           rows={4}
-          className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder:text-[#8ca0b3]/60 outline-none focus:ring-2 focus:ring-[#4ade80] resize-none"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+          className="w-full px-4 py-3 rounded-xl text-sm text-gray-900 bg-white placeholder:text-gray-400 border border-gray-200 outline-none focus:ring-2 focus:ring-[#189AB4] resize-none transition-all shadow-sm"
         />
       </div>
 
       {/* Upload area */}
       <div>
-        <label className="block text-xs font-medium text-[#8ca0b3] mb-1.5">
+        <label className="block text-xs font-semibold text-gray-700 mb-1.5">
           Photos (optional, max 5)
         </label>
         <div
           onClick={() => fileRef.current?.click()}
-          className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all hover:bg-white/5"
-          style={{ borderColor: 'rgba(255,255,255,0.15)' }}
+          className="border-2 border-dashed border-gray-300 bg-gray-50 rounded-xl p-6 text-center cursor-pointer hover:border-[#189AB4] hover:bg-blue-50 transition-colors group"
         >
-          <Upload className="w-6 h-6 text-[#8ca0b3] mx-auto mb-2" />
-          <p className="text-sm text-[#8ca0b3]">Click to upload photos</p>
-          <p className="text-xs text-[#8ca0b3]/60 mt-1">JPG, PNG, WebP — max 5 images</p>
+          <Upload className="w-6 h-6 text-gray-400 group-hover:text-[#189AB4] mx-auto mb-2" />
+          <p className="text-sm font-medium text-gray-500 group-hover:text-[#189AB4]">Click to upload photos</p>
+          <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP — max 5 images</p>
         </div>
         <input
           ref={fileRef}
@@ -136,33 +133,30 @@ export function EvidenceUpload({ dealId, role, onSuccess }: EvidenceUploadProps)
             </motion.div>
           ))}
           {previews.length < 5 && (
-            <div
-              onClick={() => fileRef.current?.click()}
-              className="w-20 h-20 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-all hover:bg-white/5"
-              style={{ borderColor: 'rgba(255,255,255,0.15)' }}
-            >
-              <Image className="w-5 h-5 text-[#8ca0b3]" />
-            </div>
-          )}
-        </div>
-      )}
+              <div
+                onClick={() => fileRef.current?.click()}
+                className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-[#189AB4] hover:bg-blue-50 group transition-colors"
+              >
+                <Image className="w-5 h-5 text-gray-400 group-hover:text-[#189AB4]" />
+              </div>
+            )}
+          </div>
+        )}
 
-      {error && (
-        <div className="flex items-center gap-2 p-3 rounded-xl text-sm text-red-400"
-          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
-          <AlertCircle className="w-4 h-4" />
-          {error}
-        </div>
-      )}
+        {error && (
+          <div className="flex items-center gap-2 p-3 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200 shadow-sm mt-4">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            {error}
+          </div>
+        )}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-3 rounded-xl font-bold text-sm text-[#04101f] disabled:opacity-60"
-        style={{ background: 'linear-gradient(135deg,#4ade80,#22c55e)' }}
-      >
-        {loading ? 'Uploading...' : 'Submit evidence'}
-      </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 mt-2 rounded-xl font-bold text-sm text-white bg-[#05445E] hover:bg-[#043346] shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Uploading...' : 'Submit Evidence'}
+        </button>
     </form>
   )
 }

@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import DashboardClient from './DashboardClient'
+
 export const metadata = { title: 'Dashboard' }
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -28,7 +31,7 @@ export default async function DashboardPage() {
     const { data } = await supabase
       .from('deals')
       .select('*')
-      .eq('buyer_email', user.email)
+      .or(`buyer_email.eq.${user.email},buyer_wallet.eq.${profile?.wallet_address || 'UNSET'}`)
       .order('created_at', { ascending: false })
     deals = data || []
   } else if (role === 'arbitrator') {

@@ -33,7 +33,7 @@ export default async function ProfilePage() {
     .from('deals')
     .select('status, amount_usdc')
     .or(role === 'buyer'
-      ? `buyer_email.eq.${user.email}`
+      ? `buyer_email.eq.${user.email},buyer_wallet.eq.${profile?.wallet_address || 'UNSET'}`
       : `seller_id.eq.${user.id}`)
 
   const allDeals = deals || []
@@ -42,6 +42,25 @@ export default async function ProfilePage() {
   const volume = allDeals
     .filter(d => d.status === 'COMPLETED' || d.status === 'RESOLVED')
     .reduce((acc, d) => acc + d.amount_usdc, 0)
+
+  // Calculate Locked or Pending Escrow
+  const activeStatuses = ['FUNDED', 'DELIVERED', 'DISPUTED']
+  const lockedEscrow = allDeals
+    .filter(d => activeStatuses.includes(d.status))
+    .reduce((acc, d) => acc + d.amount_usdc, 0)
+
+  // Fetch live wallet balance from Algorand Testnet
+  let walletUsdc = 0
+  if (profile?.wallet_address) {
+    try {
+      const res = await fetch(`https://testnet-api.algonode.cloud/v2/accounts/${profile.wallet_address}`, { cache: 'no-store' })
+      const data = await res.json()
+      const usdcAsset = data.assets?.find((a: any) => a['asset-id'] === 10458941)
+      if (usdcAsset) walletUsdc = usdcAsset.amount / 1_000_000
+    } catch (e) {
+      console.error('Failed to fetch wallet balance', e)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900 font-sans">
@@ -65,6 +84,40 @@ export default async function ProfilePage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-12">
+
+        {/* Financial Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+          
+          <div className="bg-white rounded-lg p-6 border border-gray-200 flex flex-col justify-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-100 rounded-full blur-3xl pointer-events-none" />
+            <h2 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide">
+              Wallet Balance
+            </h2>
+            <p className="text-3xl font-bold text-[#05445E]">
+              ${walletUsdc.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-sm font-medium text-gray-400">USDC</span>
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg p-6 border border-gray-200 flex flex-col justify-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-100 rounded-full blur-3xl pointer-events-none" />
+            <h2 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide">
+              {role === 'buyer' ? 'Locked in Escrow' : 'Pending Escrow Payout'}
+            </h2>
+            <p className="text-3xl font-bold text-amber-500">
+              ${lockedEscrow.toLocaleString()} <span className="text-sm font-medium text-amber-500/50">USDC</span>
+            </p>
+          </div>
+
+          <div className="bg-white rounded-lg p-6 border border-gray-200 flex flex-col justify-center relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-green-100 rounded-full blur-3xl pointer-events-none" />
+            <h2 className="text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide">
+              Lifetime Volume
+            </h2>
+            <p className="text-3xl font-bold text-[#10b981]">
+              ${volume.toLocaleString()} <span className="text-sm font-medium text-green-500/50">USDC</span>
+            </p>
+          </div>
+        </div>
 
         {/* Profile card */}
         <div className="bg-white rounded-lg p-6 mb-8 border border-gray-200 flex items-center gap-6">
@@ -113,7 +166,7 @@ export default async function ProfilePage() {
                     <span className="w-2 h-2 rounded-full bg-green-500" /> Connected Address
                   </span>
                   <a
-                    href={`https://testnet.algoexplorer.io/address/${profile.wallet_address}`}
+                    href={`https://lora.algokit.io/testnet/account/${profile.wallet_address}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[#189AB4] hover:underline flex items-center gap-1 text-sm"
@@ -140,18 +193,7 @@ export default async function ProfilePage() {
           )}
         </div>
 
-        {/* Volume */}
-        <div className="bg-white rounded-lg p-6 border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-1">
-              Lifetime Trading Volume
-            </h2>
-            <p className="text-sm text-gray-500">Total volume of all completed escrow contracts</p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-[#10b981]">${volume.toLocaleString()} <span className="text-sm font-medium text-gray-500">USDC</span></p>
-          </div>
-        </div>
+
 
       </main>
     </div>

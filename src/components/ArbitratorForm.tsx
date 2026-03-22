@@ -3,25 +3,56 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { AlertCircle, CheckCircle2, Scale } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ChevronRight, Calculator, FileText } from 'lucide-react'
 
 interface ArbitratorFormProps {
   dealId: string
   amountUSDC: number
+  sellerName: string
+  buyerName: string
 }
 
-export function ArbitratorForm({ dealId, amountUSDC }: ArbitratorFormProps) {
+export function ArbitratorForm({ dealId, amountUSDC, sellerName, buyerName }: ArbitratorFormProps) {
   const router = useRouter()
-  const [sellerPct, setSellerPct] = useState(50)
+  const [sellerPctStr, setSellerPctStr] = useState('50')
+  const [buyerPctStr, setBuyerPctStr] = useState('50')
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
 
-  const buyerPct = 100 - sellerPct
+  const sellerPct = parseInt(sellerPctStr) || 0
+  const buyerPct = parseInt(buyerPctStr) || 0
+
+  const isTotalValid = sellerPct + buyerPct === 100
+  const isReasoningValid = notes.trim().length >= 20
+  const canSubmit = isTotalValid && isReasoningValid
+
+  function handleSellerChange(val: string) {
+    setSellerPctStr(val)
+    const p = parseInt(val)
+    if (!isNaN(p) && p >= 0 && p <= 100) {
+      setBuyerPctStr((100 - p).toString())
+    }
+  }
+
+  function handleBuyerChange(val: string) {
+    setBuyerPctStr(val)
+    const p = parseInt(val)
+    if (!isNaN(p) && p >= 0 && p <= 100) {
+      setSellerPctStr((100 - p).toString())
+    }
+  }
+
+  function applyPreset(s: number, b: number) {
+    setSellerPctStr(s.toString())
+    setBuyerPctStr(b.toString())
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!canSubmit) return
+
     setError('')
     setLoading(true)
 
@@ -33,12 +64,12 @@ export function ArbitratorForm({ dealId, amountUSDC }: ArbitratorFormProps) {
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to submit verdict')
+      if (!res.ok) throw new Error(data.error || 'Failed to submit verdict. Ensure you are authorized.')
 
       setDone(true)
-      setTimeout(() => router.push(`/deal/${dealId}`), 2000)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Submission failed')
+      setTimeout(() => router.refresh(), 2000)
+    } catch (err: any) {
+      setError(err?.message || 'Submission failed')
     } finally {
       setLoading(false)
     }
@@ -46,124 +77,183 @@ export function ArbitratorForm({ dealId, amountUSDC }: ArbitratorFormProps) {
 
   if (done) {
     return (
-      <div className="flex items-center gap-3 p-4 rounded-xl text-[#4ade80]"
-        style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)' }}>
-        <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-        <p className="text-sm font-semibold">Verdict submitted! Funds distributed on-chain.</p>
+      <div className="bg-green-50 rounded-2xl p-8 border border-green-200 text-center animate-in fade-in slide-in-from-bottom-2">
+        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-green-100">
+          <CheckCircle2 className="w-8 h-8 text-green-500" />
+        </div>
+        <h3 className="text-xl font-bold text-green-900 mb-2">Verdict executed on Algorand.</h3>
+        <p className="text-sm text-green-700/80 mb-6">The smart contract has distributed the funds according to your verdict.</p>
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Split slider */}
+    <form onSubmit={handleSubmit} className="space-y-8 bg-white p-8 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#05445E]/5 rounded-full blur-3xl" />
+      
+      {/* Percentage Split inputs */}
       <div>
-        <label className="block text-sm font-semibold text-white mb-4">
-          <Scale className="w-4 h-4 inline mr-2 text-[#4ade80]" />
-          USDC distribution
+        <label className="flex items-center gap-2 text-sm font-extrabold text-[#05445E] mb-4">
+          <Calculator className="w-4 h-4 text-[#189AB4]" />
+          Split percentages
         </label>
-
-        {/* Visual split */}
-        <div className="flex rounded-xl overflow-hidden h-10 mb-3">
-          <div
-            className="flex items-center justify-center text-xs font-bold text-[#04101f] transition-all duration-200"
-            style={{ width: `${sellerPct}%`, background: '#4ade80', minWidth: '30px' }}
-          >
-            {sellerPct > 20 ? `${sellerPct}%` : ''}
+        
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="flex-1">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-[#189AB4] mb-2 px-1">Seller receives (%)</label>
+            <div className={`relative flex items-center bg-gray-50 border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#189AB4]/50 transition-all ${sellerPct + buyerPct > 100 ? 'border-red-400' : 'border-gray-200'}`}>
+              <div className="bg-[#189AB4]/10 w-12 h-12 flex items-center justify-center font-black text-[#189AB4]">%</div>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={sellerPctStr}
+                onChange={e => handleSellerChange(e.target.value)}
+                className="w-full h-12 px-4 bg-transparent outline-none font-bold text-gray-900 text-lg"
+              />
+            </div>
+            {!isTotalValid && sellerPct + buyerPct > 100 && <p className="text-xs text-red-500 mt-2 font-medium">Total exceeds 100%</p>}
           </div>
-          <div
-            className="flex items-center justify-center text-xs font-bold text-white transition-all duration-200"
-            style={{ width: `${buyerPct}%`, background: '#3b91e8', minWidth: '30px' }}
-          >
-            {buyerPct > 20 ? `${buyerPct}%` : ''}
-          </div>
-        </div>
 
-        <input
-          type="range"
-          min="0"
-          max="100"
-          step="5"
-          value={sellerPct}
-          onChange={e => setSellerPct(parseInt(e.target.value))}
-          className="w-full accent-[#4ade80]"
-        />
-
-        <div className="grid grid-cols-2 gap-3 mt-3">
-          <div
-            className="p-3 rounded-xl text-center"
-            style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)' }}
-          >
-            <p className="text-xs text-[#8ca0b3] mb-1">Seller receives</p>
-            <p className="text-lg font-black text-[#4ade80]">{sellerPct}%</p>
-            <p className="text-xs text-[#8ca0b3]">${Math.floor(amountUSDC * sellerPct / 100)} USDC</p>
-          </div>
-          <div
-            className="p-3 rounded-xl text-center"
-            style={{ background: 'rgba(59,145,232,0.08)', border: '1px solid rgba(59,145,232,0.2)' }}
-          >
-            <p className="text-xs text-[#8ca0b3] mb-1">Buyer receives</p>
-            <p className="text-lg font-black text-[#3b91e8]">{buyerPct}%</p>
-            <p className="text-xs text-[#8ca0b3]">${Math.floor(amountUSDC * buyerPct / 100)} USDC</p>
+          <div className="flex-1">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-[#05445E] mb-2 px-1">Buyer receives (%)</label>
+            <div className={`relative flex items-center bg-gray-50 border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#05445E]/50 transition-all ${sellerPct + buyerPct > 100 ? 'border-red-400' : 'border-gray-200'}`}>
+              <div className="bg-[#05445E]/10 w-12 h-12 flex items-center justify-center font-black text-[#05445E]">%</div>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={buyerPctStr}
+                onChange={e => handleBuyerChange(e.target.value)}
+                className="w-full h-12 px-4 bg-transparent outline-none font-bold text-gray-900 text-lg"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Quick presets */}
-        <div className="flex gap-2 mt-3 flex-wrap">
-          {[[100, 0], [80, 20], [50, 50], [20, 80], [0, 100]].map(([s, b]) => (
-            <button
-              key={`${s}-${b}`}
-              type="button"
-              onClick={() => setSellerPct(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${sellerPct === s ? 'text-[#04101f]' : 'text-[#8ca0b3] hover:text-white'}`}
-              style={{
-                background: sellerPct === s ? '#4ade80' : 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-              }}
-            >
-              {s}/{b}
-            </button>
-          ))}
+        {/* Calculated amounts preview visually */}
+        {isTotalValid && (
+          <div className="flex items-center gap-4 bg-gray-50 rounded-xl border border-gray-100 p-2 mb-6">
+            <div className="flex-1 text-center py-2 px-4 rounded-lg bg-green-50 border border-green-100">
+              <p className="text-[10px] uppercase font-bold text-green-600 tracking-wider">Seller payout</p>
+              <p className="text-xl font-black text-green-700">${Math.floor(amountUSDC * sellerPct / 100)} USDC</p>
+            </div>
+            <div className="flex-1 text-center py-2 px-4 rounded-lg bg-blue-50 border border-blue-100">
+              <p className="text-[10px] uppercase font-bold text-blue-600 tracking-wider">Buyer payout</p>
+              <p className="text-xl font-black text-blue-700">${Math.floor(amountUSDC * buyerPct / 100)} USDC</p>
+            </div>
+          </div>
+        )}
+
+        {/* Common Verdict Presets */}
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => applyPreset(100, 0)} className="px-4 py-2 rounded-lg text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors">
+            Full payment to seller (100% / 0%)
+          </button>
+          <button type="button" onClick={() => applyPreset(0, 100)} className="px-4 py-2 rounded-lg text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors">
+            Full refund to buyer (0% / 100%)
+          </button>
+          <button type="button" onClick={() => applyPreset(50, 50)} className="px-4 py-2 rounded-lg text-xs font-bold bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-colors">
+            Split evenly (50% / 50%)
+          </button>
         </div>
       </div>
 
-      {/* Notes */}
+      {/* Arbitrator Notes */}
       <div>
-        <label className="block text-xs font-medium text-[#8ca0b3] mb-1.5">Arbitrator notes (optional)</label>
+        <label className="flex items-center gap-2 text-sm font-extrabold text-[#05445E] mb-2">
+          <FileText className="w-4 h-4 text-[#189AB4]" />
+          Reasoning (required &mdash; shown to both parties)
+        </label>
         <textarea
           value={notes}
           onChange={e => setNotes(e.target.value)}
-          placeholder="Explain your reasoning for the split..."
-          rows={3}
-          className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder:text-[#8ca0b3]/60 outline-none focus:ring-2 focus:ring-[#4ade80] resize-none"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+          placeholder="Explain the basis for your verdict. Both the seller and buyer will receive this explanation..."
+          rows={4}
+          className="w-full bg-gray-50 px-4 py-3 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-[#189AB4]/30 focus:border-[#189AB4] transition-all resize-none shadow-inner"
         />
+        <div className="flex justify-between items-center mt-2">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Minimum 20 characters required.</p>
+          <span className={`text-xs font-bold ${isReasoningValid ? 'text-green-500' : 'text-orange-500'}`}>
+            {notes.length} / 20 chars
+          </span>
+        </div>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded-xl text-sm text-red-400"
-          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
-          <AlertCircle className="w-4 h-4" />
-          {error}
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-sm font-semibold text-red-700">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500 mt-0.5" />
+          <p className="flex-1">{error}</p>
         </div>
       )}
 
-      <motion.button
-        type="submit"
-        disabled={loading}
-        whileHover={{ scale: loading ? 1 : 1.01 }}
-        className="w-full py-4 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-60"
-        style={{
-          background: loading ? 'rgba(239,68,68,0.5)' : '#ef4444',
-          boxShadow: loading ? 'none' : '0 0 20px rgba(239,68,68,0.3)',
-        }}
-      >
-        {loading ? 'Submitting verdict...' : `Submit verdict: Seller ${sellerPct}% / Buyer ${buyerPct}%`}
-      </motion.button>
+      {/* Preview Card */}
+      {isTotalValid && isReasoningValid && (
+        <div className="bg-slate-900 rounded-xl p-6 text-white shadow-xl relative overflow-hidden border border-slate-700">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-[#189AB4]/20 rounded-full blur-3xl pointer-events-none" />
+          <h4 className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-4 border-b border-white/10 pb-2">Verdict Execution Preview</h4>
+          
+          <div className="space-y-2 mb-6 font-mono text-sm relative z-10">
+            <div className="flex justify-between">
+              <span className="text-gray-300">Seller ({sellerName.split(' ')[0]}) receives :</span>
+              <span className="font-bold text-[#189AB4]">
+                ${Math.floor(amountUSDC * sellerPct / 100)} USDC <span className="text-gray-500 text-xs">({sellerPct}%)</span>
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-300">Buyer ({buyerName.split(' ')[0]}) receives :</span>
+              <span className="font-bold text-[#4ade80]">
+                ${Math.floor(amountUSDC * buyerPct / 100)} USDC <span className="text-gray-500 text-xs">({buyerPct}%)</span>
+              </span>
+            </div>
+          </div>
+          
+          <div className="mb-6 relative z-10">
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Reasoning to be sent:</span>
+            <p className="text-xs italic text-gray-300 pl-3 border-l-2 border-[#189AB4]/50 leading-relaxed max-w-xl">
+              "{notes}"
+            </p>
+          </div>
 
-      <p className="text-center text-xs text-[#8ca0b3]">
-        This will execute the split on Algorand immediately. Cannot be undone.
-      </p>
+          <p className="text-[10px] font-bold text-orange-400 tracking-wide uppercase flex items-center gap-1.5 relative z-10">
+            <AlertCircle className="w-3 h-3" />
+            This will execute immediately on Algorand and cannot be undone.
+          </p>
+
+          <motion.button
+            onClick={handleSubmit}
+            disabled={loading || !canSubmit}
+            whileHover={{ scale: (loading || !canSubmit) ? 1 : 1.02 }}
+            whileTap={{ scale: (loading || !canSubmit) ? 1 : 0.98 }}
+            className={`w-full mt-6 py-4 rounded-xl flex items-center justify-center gap-2 font-black transition-all text-sm uppercase tracking-widest
+              ${(loading || !canSubmit)
+                ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                : 'bg-white text-slate-900 border border-white hover:bg-slate-100 shadow-[0_0_20px_rgba(255,255,255,0.1)]'
+              }
+            `}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-slate-500 border-t-white rounded-full" />
+                Executing on-chain...
+              </span>
+            ) : (
+              <>Confirm and Submit Verdict <ChevronRight className="w-4 h-4" /></>
+            )}
+          </motion.button>
+        </div>
+      )}
+
+      {/* Fallback button if preview isn't visible */}
+      {(!isTotalValid || !isReasoningValid) && (
+        <button
+          disabled
+          className="w-full py-4 rounded-xl bg-gray-100 border border-gray-200 text-gray-400 font-bold text-sm flex items-center justify-center cursor-not-allowed uppercase tracking-widest shadow-sm"
+        >
+          {(!isTotalValid) ? 'Percentages must total 100%' : 'Reasoning needed to submit'}
+        </button>
+      )}
+
     </form>
   )
 }

@@ -25,6 +25,8 @@ interface DealDetailClientProps {
     tracking_id?: string
     courier?: string
     tracking_hash?: string
+    evidence_urls?: string[]
+    seller_wallet: string
   }
   isSeller: boolean
   isBuyer: boolean
@@ -52,34 +54,65 @@ export function DealDetailClient({
   }
 
   function refresh() {
-    router.refresh()
+    window.location.reload()
   }
 
   const appId = deal.contract_app_id ? parseInt(deal.contract_app_id) : 0
 
   return (
     <div className="space-y-6">
-      {/* Share deal link */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#189AB4]/5 rounded-full blur-3xl pointer-events-none" />
-        <p className="text-[10px] font-extrabold text-[#189AB4] uppercase tracking-widest mb-3 relative z-10">Share Contract Link</p>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 relative z-10">
-          <div className="flex-1 px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-mono text-slate-600 truncate font-semibold">
-            {dealLink}
+      {/* Share deal link - Only relevant for Seller */}
+      {isSeller && deal.status === 'PROPOSED' && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#189AB4]/5 rounded-full blur-3xl pointer-events-none" />
+          <p className="text-[10px] font-extrabold text-[#189AB4] uppercase tracking-widest mb-3 relative z-10">Share Contract Link</p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 relative z-10">
+            <div className="flex-1 px-4 py-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-mono text-slate-600 truncate font-semibold">
+              {dealLink}
+            </div>
+            <button
+              onClick={copyLink}
+              className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold border border-slate-200 hover:border-[#189AB4]/30 hover:bg-[#189AB4]/5 text-[#05445E] transition-all"
+            >
+              {copied ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              {copied ? 'Copied' : 'Copy Link'}
+            </button>
           </div>
-          <button
-            onClick={copyLink}
-            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold border border-slate-200 hover:border-[#189AB4]/30 hover:bg-[#189AB4]/5 text-[#05445E] transition-all"
-          >
-            {copied ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-            {copied ? 'Copied' : 'Copy Link'}
-          </button>
+          <p className="text-xs text-slate-500 mt-4 flex items-center gap-2 font-medium relative z-10">
+            <Share2 className="w-4 h-4 text-[#189AB4]" />
+            Send this link to the buyer so they can review and securely fund the escrow via Algorand.
+          </p>
         </div>
-        <p className="text-xs text-slate-500 mt-4 flex items-center gap-2 font-medium relative z-10">
-          <Share2 className="w-4 h-4 text-[#189AB4]" />
-          Send this link to the buyer so they can review and securely fund the escrow via Algorand.
-        </p>
-      </div>
+      )}
+
+      {/* Persistent Tracking & Delivery Proof (Visible post-funding) */}
+      {deal.tracking_id && deal.courier && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+          <TrackingTimeline
+            dealId={deal.id}
+            trackingId={deal.tracking_id}
+            courier={deal.courier}
+            trackingHash={deal.tracking_hash}
+            appId={appId}
+          />
+
+          {deal.evidence_urls && deal.evidence_urls.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-slate-100">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <CheckCheck className="w-3.5 h-3.5 text-green-500" />
+                Seller's Shipping Evidence
+              </p>
+              <div className="flex gap-3 flex-wrap">
+                {deal.evidence_urls.map((url: string, i: number) => (
+                  <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-xl overflow-hidden shadow-sm border border-slate-200 hover:scale-105 transition-transform duration-200 bg-slate-50">
+                    <img src={url} alt={`Proof ${i + 1}`} className="w-full h-full object-cover" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Action panel */}
       <AnimatePresence mode="wait">
@@ -171,18 +204,6 @@ export function DealDetailClient({
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            {/* Tracking timeline */}
-            {deal.tracking_id && deal.courier && (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                <TrackingTimeline
-                  dealId={deal.id}
-                  trackingId={deal.tracking_id}
-                  courier={deal.courier}
-                  trackingHash={deal.tracking_hash}
-                  appId={appId}
-                />
-              </div>
-            )}
 
             {isBuyer && appId > 0 && (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
@@ -196,6 +217,7 @@ export function DealDetailClient({
                     appId={appId}
                     amountUSDC={deal.amount_usdc}
                     buyerWallet={deal.buyer_wallet}
+                    sellerWallet={deal.seller_wallet}
                     onSuccess={refresh}
                   />
                   <RaiseDispute
