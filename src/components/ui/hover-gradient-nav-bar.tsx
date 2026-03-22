@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 
 const menuItems = [
   { label: "How it works", href: "/#how-it-works" },
-  { label: "Features", href: "/#features" },
+  { label: "About", href: "/about" },
   { label: "Why Algorand?", href: "/why-algorand" },
 ];
 
