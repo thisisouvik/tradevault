@@ -13,6 +13,7 @@
 - [Technical Architecture](#technical-architecture)
 - [File Structure (Clean Architecture)](#file-structure-clean-architecture)
 - [User Workflow](#user-workflow)
+- [Logistics & Tracking Transparency](#logistics--tracking-transparency)
 - [Blockchain Integration](#blockchain-integration)
 - [Challenges & Mitigations](#challenges--mitigations)
 - [Local Installation & Setup](#local-installation--setup)
@@ -145,6 +146,17 @@ sequenceDiagram
         Smart Contract-->>Buyer: Inner Txn: 30% USDC
     end
 ```
+
+---
+
+## 📦 Logistics & Tracking Transparency <a name="logistics--tracking-transparency"></a>
+
+Financial transparency is only half the battle. To guarantee that the physical world matches the on-chain data, we've built an end-to-end logistics tracking dashboard directly into the platform window: **Transparency on TOP!**
+
+1. **Integrated Courier APIs:** When a seller ships an item, they feed the tracking number and courier directly into TradeVault. We utilize powerful external shipping APIs (like TrackingMore) to live-fetch the package's physical location.
+2. **Visual Deal Dashboard:** Buyers no longer need to check their email or courier websites. The TradeVault Deal Dashboard displays a live, visual timeline of the package's status (In Transit, Out for Delivery, Delivered) right alongside the smart contract status.
+3. **Cryptographic Proof of Shipment:** When a valid tracking number is submitted, we generate a SHA-256 hash of the tracking parameters and store it on the Algorand blockchain. This ensures that the seller's claim of shipment is immutable and time-stamped, providing irrefutable evidence if a dispute is ever raised.
+4. **Instant Handovers:** For local, in-person deals, we bypass couriers entirely using "Instant Delivery" cryptography—allowing the buyer to scan a QR code to instantly finalize the transaction.
 
 ---
 
