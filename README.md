@@ -1,121 +1,267 @@
-# TrustEscrow
+<div align="center">
+  <img src="public/logo.png" alt="TradeVault Logo" width="150" />
+  <h1>TradeVault</h1>
+  <p><strong>From proposal to payment in 4 steps — Secure, Trustless, On-Chain Escrow.</strong></p>
+</div>
 
-> **Algorand DeFi Track Hackathon** — Replace a $240 bank letter of credit with a $0.002 Algorand smart contract.
+<br />
 
-TrustEscrow is a non-custodial escrow platform for cross-border trade. It empowers businesses and individuals to trade goods globally without relying on banks, expensive letters of credit, or centralized middlemen. A completely immutable Algorand smart contract acts as the escrow agent, ensuring zero-trust execution.
-
----
-
-## 🏗 Architecture & Tech Stack
-
-Our system is structured into three discrete layers: **Frontend**, **Backend/BaaS**, and **Blockchain Layer**.
-
-### 1. Frontend Operations
-- **Framework:** Next.js 15 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS v4
-- **Animations:** Framer Motion
-- **Icons:** Lucide React
-- **Design System:** Custom Light SaaS Theme (DM Sans font, #111827 text, #2563EB primary accent, clean #FFFFFF cards on #F0F2F5 backgrounds).
-
-### 2. Backend & Infrastructure (Supabase)
-- **Authentication:** Supabase Auth (Email & Password, JWTs passed securely to the frontend).
-- **Database:** Supabase PostgreSQL (Stores off-chain metadata like names, tracking IDs, and item descriptions).
-- **Storage:** Supabase Storage (Secure bucket for uploading dispute evidence photos).
-- **Real-time / API:** Supabase JS Client for ultra-fast, direct data fetching with Row Level Security (RLS) policies.
-
-### 3. Blockchain Layer (Algorand)
-- **Smart Contract Language:** Python (using PuyaPy for Algorand smart contracts).
-- **Network:** Algorand TestNet
-- **Payment Token:** USDC (TestNet ASA ID: `10458941`)
-- **Wallet Connection:** Pera Wallet (`@perawallet/connect`) via `algosdk`.
-
-### 4. External Integrations
-- **Email:** Resend API (For transactional emails to buyer/seller).
-- **Shipping Validation:** TrackingMore API (Validates package delivery status to trigger smart contract).
-- **Automation:** Vercel Cron (Checks for dormant contracts to automatically release funds via Timeout conditions).
+## 📖 Table of Contents
+- [The Problem](#the-problem)
+- [Our Solution](#our-solution)
+- [Why TradeVault? (Uniqueness)](#why-tradevault-uniqueness)
+- [Technical Architecture](#technical-architecture)
+- [File Structure (Clean Architecture)](#file-structure-clean-architecture)
+- [User Workflow](#user-workflow)
+- [Blockchain Integration](#blockchain-integration)
+- [Challenges & Mitigations](#challenges--mitigations)
+- [Local Installation & Setup](#local-installation--setup)
+- [Team & Acknowledgments](#team--acknowledgments)
 
 ---
 
-## ⚙️ System Workflow & Contract Lifecycle
+## 🛑 The Problem <a name="the-problem"></a>
+In peer-to-peer (P2P) online marketplaces and shipping contracting, **trust is the biggest bottleneck.** 
+- **Buyers** are afraid of paying upfront and never receiving the promised goods or services.
+- **Sellers** hesitate to ship products or deliver work without guaranteed payment. 
+- Traditional escrow services charge exorbitant fees (often 5-10%), hold funds for agonizingly long periods (3-5 business days), and rely on opaque, centralized dispute resolution processes that are prone to human bias and error. 
 
-1. **PROPOSED:** Seller drafts the contract details (price, item, buyer wallet address, dispute window). The contract is compiled and deployed to the Algorand blockchain.
-2. **FUNDED:** Buyer reviews the on-chain contract and calls the `fund` method. This is grouped atomically with a USDC transfer. The contract now securely holds the funds.
-3. **DELIVERED:** Seller ships the item and submits the tracking number. We verify it via TrackingMore API, and store a **SHA256 hash** of the tracking on-chain permanently.
-4. **COMPLETED:** Buyer receives the item and calls the `confirm` method. An inner transaction executes, sending the locked USDC directly to the Seller.
-5. **DISPUTED (Edge Case):** If the buyer flags an issue, funds are locked pending arbitration. Both parties upload photo evidence to Supabase Storage. An arbitrator reviews the evidence and sends a split payout ratio to the contract, which distributes the funds accordingly.
+Additionally, international transactions are plagued by high currency conversion fees and slow wire transfer speeds.
 
----
+## 💡 Our Solution <a name="our-solution"></a>
+**TradeVault** is a decentralized, smart-contract-powered escrow platform built on the **Algorand Blockchain**. We eliminate the need for centralized trust by cryptographically locking payments in a transparent, immutable on-chain vault until predefined conditions (like tracked delivery confirmation) are met.
 
-## 🗄️ Data Storage Strategy
+If everything goes smoothly, funds are released instantly with a mere $0.002 transaction fee. If a disagreement arises, a structured, evidence-based dispute resolution process allows an independent arbitrator to fairly split the funds.
 
-We maintain a strict separation of concerns between on-chain data and off-chain data for cost-efficiency.
+## 🌟 Why TradeVault? (Uniqueness) <a name="why-tradevault-uniqueness"></a>
 
-**On-chain (`algosdk`):**
-- Contract State (`status`)
-- Token balances (USDC custody)
-- Cryptographic proof (Buyer/Seller public keys, Tracking SHA256 hashes)
+Compared to existing products (like PayPal, traditional bank escrows, or central-exchange P2P platforms):
 
-**Off-chain (Supabase):**
-- `profiles`: User information (auto-linked to Auth UUIDs).
-- `deals`: Human-readable deal data (title, description, raw tracking numbers).
-- `evidence`: URLs to dispute photos.
-- `arbitration`: Off-chain reasoning logs for rulings.
+1. **True Atomic Transactions:** Unlike traditional platforms where money sits in a corporate bank account, TradeVault groups the buyer's acceptance and USDC transfer into an *Atomic Transfer* using Algorand's layer-1 capabilities. The funds are mathematically locked into a purpose-built smart contract—not held by us.
+2. **Fractional Cost:** We leverage Algorand's ultra-low fee structure. Traditional escrows cost dollars or percentages; a TradeVault execution costs mere fractions of a penny.
+3. **Instant Settlements:** No 3-5 day banking delays. When a buyer confirms receipt, the smart contract's inner transaction pays the seller locally within 3.3 seconds.
+4. **Verifiable Delivery:** We integrate with external shipping APIs (Logistics) to verify tracking hashes on-chain, ensuring cryptographic proof that an item was actually shipped before funds can ever be contested.
+5. **Decentralized Arbitration Engine:** TradeVault incorporates an internal dispute framework that allows Arbitrators to split funds proportionally based on irrefutable evidence stored and time-stamped on-chain.
 
 ---
 
-## 🚀 Local Development Setup
+## 🏗️ Technical Architecture <a name="technical-architecture"></a>
 
-Follow these steps to run the platform locally.
+TradeVault utilizes a modern, serverless architecture that bridges an intuitive Web2 frontend with a robust Web3 backend.
 
-### 1. Clone the Repository
-```bash
-git clone <your-repo-url>
-cd tradevault
-npm install
+```mermaid
+graph TD
+    A[Client UI - Next.js/React] -->|Authentication & DB| B(Supabase)
+    A -->|WalletConnect / Pera / Lute| C{Algorand Blockchain}
+    
+    C -->|Smart Contract Deployment| D[TEAL Escrow App]
+    C -->|Atomic Transfers| D
+    
+    A -->|Shipping Tracking| E[TrackingMore API]
+    
+    B -->|Deals, Users, Evidence| F[(PostgreSQL DB)]
+    
+    D -->|Inner Txns| G[USDC Payouts]
+    
+    classDef web2 fill:#F0F8FF,stroke:#189AB4,stroke-width:2px,color:#05445E;
+    classDef web3 fill:#F5FFFA,stroke:#05445E,stroke-width:2px,color:#189AB4;
+    class A,B,E,F web2;
+    class C,D,G web3;
 ```
 
-### 2. Configure Supabase (Database & Auth)
-1. Create a free project at [Supabase](https://supabase.com).
-2. Go to the **SQL Editor** in your Supabase dashboard and run the entire script found in `supabase/schema.sql` to generate your tables, triggers, and RLS policies.
-3. Go to **Storage**, click "New Bucket", and create a public bucket named `evidence`.
+**Tech Stack:**
+* **Frontend:** Next.js 15 (React), Tailwind CSS, Framer Motion
+* **Backend:** Next.js API Routes, Supabase (PostgreSQL, Auth, Storage)
+* **Blockchain:** Algorand SDK (`algosdk`), `@txnlab/use-wallet-react`, PyTeal / TEAL smart contracts
+* **Integrations:** TrackingMore API (Courier Integration)
+
+---
+
+## 📂 File Structure (Clean Architecture) <a name="file-structure-clean-architecture"></a>
+
+Our repository strictly follows Next.js App Router conventions with a focus on separation of concerns.
+
+```text
+TradeVault/
+├── src/
+│   ├── app/                      # Next.js 15 App Router pages & API
+│   │   ├── (auth)/               # Grouped routes for Login/Signup
+│   │   ├── api/                  # Serverless route handlers (Backend)
+│   │   ├── arbitrator/           # Arbitrator dashboard & views
+│   │   ├── dashboard/            # User deal management portal
+│   │   ├── deal/                 # Individual smart contract views
+│   │   └── page.tsx              # Public landing page
+│   ├── components/               # Reusable React components
+│   │   ├── landing/              # Dedicated landing page sections
+│   │   ├── ui/                   # High-level UI elements
+│   │   └── *Client.tsx           # Client-side component logic
+│   ├── lib/                      # Core business logic & integrations
+│   │   ├── algorand.ts           # algodClient, indexer configs
+│   │   ├── supabase/             # Client & Admin auth instances
+│   │   └── tailwind-plugins.ts   # Custom CSS logic
+│   └── contracts/                # TEAL / PyTeal source code
+├── public/                       # Static assets (logo, icons)
+├── package.json                  # Project dependencies
+└── tailwind.config.ts            # Theme definitions (#189AB4, #05445E)
+```
+
+---
+
+## 🔄 User Workflow <a name="user-workflow"></a>
+
+The core journey involves four deterministic steps, permanently recorded.
+
+```mermaid
+sequenceDiagram
+    participant Seller
+    participant TradeVault UI
+    participant Smart Contract (Algorand)
+    participant Buyer
+    
+    Seller->>TradeVault UI: 1. Create Deal Terms (USDC, Courier, Window)
+    TradeVault UI->>Smart Contract: Deploy Escrow Application
+    TradeVault UI-->>Buyer: Share Secure Deal Link
+    
+    Buyer->>TradeVault UI: Review terms
+    Buyer->>Smart Contract: 2. GroupTx: Opt-in + Fund USDC
+    
+    Note over Smart Contract: Contract State: FUNDED
+    
+    Seller->>TradeVault UI: 3. Ship physical goods & Submit Tracking
+    TradeVault UI-->>Buyer: Notification of Shipment
+    
+    Note over Smart Contract: Contract State: DELIVERED
+    
+    alt Happy Path
+        Buyer->>Smart Contract: 4. Confirm Receipt
+        Smart Contract-->>Seller: Inner Txn: 100% USDC to Seller
+    else Dispute Path
+        Buyer->>Smart Contract: Raise Dispute (Freeze Funds)
+        Seller->>TradeVault UI: Submit Evidence (Auto-loaded)
+        Buyer->>TradeVault UI: Upload Defect Evidence
+        Note over TradeVault UI: Arbitrator assigned
+        TradeVault UI->>Smart Contract: Arbitrator executes split (e.g., 70/30)
+        Smart Contract-->>Seller: Inner Txn: 70% USDC
+        Smart Contract-->>Buyer: Inner Txn: 30% USDC
+    end
+```
+
+---
+
+## 💻 Blockchain Integration <a name="blockchain-integration"></a>
+
+The project heavily utilizes the JavaScript Algorand SDK to securely compile, deploy, and interact with Application Calls. Here is a simplified example of how TradeVault groups transactions securely before broadcasting:
+
+```typescript
+// Construct a secure atomic transfer for the Buyer to fund the escrow
+const params = await algodClient.getTransactionParams().do();
+
+// 1. App Call to transition state
+const appCallTxn = algosdk.makeApplicationCallTxnFromObject({
+  sender: buyerWallet,
+  appIndex: escrowAppId,
+  onComplete: algosdk.OnApplicationComplete.NoOpOC,
+  appArgs: [new TextEncoder().encode('fund')],
+  suggestedParams: params,
+});
+
+// 2. USDC Asset Transfer to the Smart Contract Address
+const usdcTransferTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+  sender: buyerWallet,
+  receiver: escrowContractAddress,
+  assetIndex: USDC_ASSET_ID,
+  amount: dealAmountInMicroUSDC,
+  suggestedParams: params,
+});
+
+// Group the transactions so they either all succeed or all fail
+algosdk.assignGroupID([appCallTxn, usdcTransferTxn]);
+
+// Request user signature via their wallet (Pera/Lute)
+const signedTxns = await signTransactions([appCallTxn, usdcTransferTxn]);
+const { txid } = await algodClient.sendRawTransaction(signedTxns).do();
+
+// Wait for block confirmation
+await algosdk.waitForConfirmation(algodClient, txid, 4);
+```
+
+---
+
+## 🚧 Challenges & Mitigations <a name="challenges--mitigations"></a>
+
+Building decentralized legal frameworks involves overcoming systemic barriers:
+
+### 1. Smart Contracts are not Recognized Legally Everywhere
+* **Challenge:** Code is not always recognized as "law" in traditional jurisdictions. If an on-chain arbitration occurs, one party might attempt to sue off-chain in a local court, creating legal friction.
+* **Mitigation:** TradeVault requires users to sign an explicit "Terms of Use" that designates the smart contract and subsequent arbitration results as legally binding arbitration under the New York Convention (or local equivalents). We bridge the gap by combining cryptographic signatures with formatted, printable PDF legal agreements generated upon deal creation.
+
+### 2. Lack of Awareness / Web3 Friction
+* **Challenge:** Non-crypto-native users are intimidated by wallets, gas fees, and token names.
+* **Mitigation:** We utilize Account Abstraction and user-friendly wallets (like Lute Wallet via email login). The UI abstracts away "MicroAlgos" and "Teal" and simply shows terms in familiar USD equivalents. Our onboarding focuses entirely on the P2P safety benefits rather than the underlying blockchain tech.
+
+### 3. Oracles bridging "Real-World" Delivery Status
+* **Challenge:** Blockchains cannot intrinsically know if a physical item was delivered.
+* **Mitigation:** We utilize trusted backend oracles bridging carrier APIs (UPS, FedEx) to write tracking verification hashes to the blockchain. We also support "Instant Handover" cryptography involving QR-code scanning for in-person local deals.
+
+---
+
+## 🛠️ Local Installation & Setup <a name="local-installation--setup"></a>
+
+Follow these instructions to run TradeVault locally on your machine.
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v18 or newer)
+- [Git](https://git-scm.com/)
+- A free [Supabase](https://supabase.com/) account for Database & Auth
+- An Algorand Testnet node or public API endpoints (e.g., AlgoNode)
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/tradevault.git
+cd tradevault
+```
+
+### 2. Install dependencies
+```bash
+npm install
+# or
+yarn install
+```
 
 ### 3. Setup Environment Variables
-We have committed an example `.env.local.example` file that lists all necessary variables. **Duplicate this file and remove `.example`:**
+Create a `.env.local` file in the root directory and add the following keys. You will need to provision your Supabase project to obtain these:
 
-```bash
-cp .env.local.example .env.local
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# App Environment
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Tracking API (Optional for demo)
+TRACKINGMORE_API_KEY=your_trackingmore_api_key
 ```
 
-Inside `.env.local`, fill in your project-specific details:
-- `NEXT_PUBLIC_SUPABASE_URL` & `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Get these from Supabase -> Settings -> API.
-- `SUPABASE_SERVICE_ROLE_KEY`: Required for server-side trusted operations.
-- `PLATFORM_MNEMONIC`: A 25-word Algorand TestNet mnemonic for the server wallet that pays for automated/cron transaction fees.
-
-### 4. Smart Contract Compilation (Optional)
-If you wish to modify the smart contract, you need the Python `algokit`:
-```bash
-pip install algokit
-algokit compile contract/smart_contracts/escrow/contract.py
-```
-
-### 5. Start the Development Server
+### 4. Run the Development Server
 ```bash
 npm run dev
+# or 
+yarn dev
 ```
-Navigate to `http://localhost:3000` to view the application.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ---
 
-## 🎨 UI & Design System
+## 🙌 Team & Acknowledgments <a name="team--acknowledgments"></a>
 
-The application uses an enterprise SaaS design approach.
-- Dark Sidebar (`#1A1D23`) combined with a Light Content layer (`#F0F2F5`).
-- Clean white cards (`#FFFFFF`) with 12px border radius.
-- Standardized status badges mapped to exact colors (e.g., `FUNDED` = Orange, `COMPLETED` = Green, `DISPUTED` = Red).
+**Team Name:** The TradeVault Builders
 
----
+We would like to extend our deepest gratitude to:
+- **Algorand Foundation** for their robust documentation and developer tools.
+- **Supabase** for providing a seamless Web2 backend authentication infrastructure.
+- All Open Source contributors of `algosdk`, React, Next.js, and Lucide Icons.
+- Our amazing collaborators and beta-testers for their relentless feedback.
 
-## 🤝 Open Source Note
-
-TrustEscrow was built for the **Algorand DeFi Track Hackathon**. It aims to solve real-world trade finance issues using the immutability of AVM (Algorand Virtual Machine) state validation. No middlemen required—just math.
+Made with 🩵 by  *Team :-* **NOT SELECTED**
