@@ -1,17 +1,33 @@
 <div align="center">
-  <img src="public/logo.png" alt="TradeVault Logo" width="150" />
+  <img src="public/logo.png" alt="TradeVault Logo" width="120" />
   <h1>TradeVault</h1>
   <p><strong>From proposal to payment in 4 steps — Secure, Trustless, On-Chain Escrow.</strong></p>
+
+  <a href="https://securetradevault.vercel.app/" target="_blank">
+    <img src="https://img.shields.io/badge/🌐_Live_Site-securetradevault.vercel.app-05445E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Site" />
+  </a>
+  &nbsp;
+  <img src="https://img.shields.io/badge/Blockchain-Algorand-189AB4?style=for-the-badge&logo=algorand&logoColor=white" alt="Algorand" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/Stablecoin-USDC-2775CA?style=for-the-badge" alt="USDC" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/Framework-Next.js_15-000000?style=for-the-badge&logo=next.js" alt="Next.js" />
 </div>
 
 <br />
 
+> **🌐 Live Demo:** [https://securetradevault.vercel.app/](https://securetradevault.vercel.app/)
+
+---
+
 ## 📖 Table of Contents
+- [Screenshots](#screenshots)
 - [The Problem](#the-problem)
 - [Our Solution](#our-solution)
 - [Why TradeVault? (Uniqueness)](#why-tradevault-uniqueness)
 - [Technical Architecture](#technical-architecture)
 - [File Structure (Clean Architecture)](#file-structure-clean-architecture)
+- [⛓️ On-Chain Smart Contract](#on-chain-smart-contract)
 - [User Workflow](#user-workflow)
 - [Logistics & Tracking Transparency](#logistics--tracking-transparency)
 - [Blockchain Integration](#blockchain-integration)
@@ -21,11 +37,48 @@
 
 ---
 
+## 📸 Screenshots <a name="screenshots"></a>
+
+### 🏠 Landing Page — Hero Section
+The public-facing homepage showcasing the platform's value proposition with global trade visuals, navigation to "How it works", "About", and "Why Algorand?" sections.
+
+![TradeVault Hero Section](public/screenshort/hero-section.png)
+
+---
+
+### 🔐 Authentication — Sign In
+Clean, split-layout sign-in page with email/password credentials and a prominent "Create one now" signup link. Designed to be frictionless for first-time users.
+
+![TradeVault Sign In Page](public/screenshort/sign-in.png)
+
+---
+
+### 📦 Seller Dashboard
+The Seller's role-aware dashboard showing deal stats (Total Deals Created, USDC Received, Active Deals, Open Disputes), on-chain reputation score, and a tabbed deal list with status-specific action buttons (View Receipt, View Tracking, Submit Evidence).
+
+![TradeVault Seller Dashboard](public/screenshort/seller.png)
+
+---
+
+### 🛒 Buyer Dashboard
+The Buyer's role-aware dashboard with mirrored deal stats (Total Deals Participated, USDC Spent), on-chain reputation, and buyer-specific action buttons — including the critical **Confirm or Dispute** button for DELIVERED contracts.
+
+![TradeVault Buyer Dashboard](public/screenshort/buyer.png)
+
+---
+
+### ⚖️ Arbitrator Dashboard
+The Arbitrator's dedicated view showing the Disputes Queue, open disputed contracts (e.g. "100 Phones — $10 USDC"), and a **Submit Evidence** action to begin the proportional verdict process.
+
+![TradeVault Arbitrator Dashboard](public/screenshort/arbitarator.png)
+
+---
+
 ## 🛑 The Problem <a name="the-problem"></a>
-In peer-to-peer (P2P) online marketplaces and shipping contracting, **trust is the biggest bottleneck.** 
+In peer-to-peer (P2P) online marketplaces and shipping contracting, **trust is the biggest bottleneck.**
 - **Buyers** are afraid of paying upfront and never receiving the promised goods or services.
-- **Sellers** hesitate to ship products or deliver work without guaranteed payment. 
-- Traditional escrow services charge exorbitant fees (often 5-10%), hold funds for agonizingly long periods (3-5 business days), and rely on opaque, centralized dispute resolution processes that are prone to human bias and error. 
+- **Sellers** hesitate to ship products or deliver work without guaranteed payment.
+- Traditional escrow services charge exorbitant fees (often 5-10%), hold funds for agonizingly long periods (3-5 business days), and rely on opaque, centralized dispute resolution processes that are prone to human bias and error.
 
 Additionally, international transactions are plagued by high currency conversion fees and slow wire transfer speeds.
 
@@ -71,10 +124,11 @@ graph TD
 ```
 
 **Tech Stack:**
-* **Frontend:** Next.js 15 (React), Tailwind CSS, Framer Motion
+* **Frontend:** Next.js 15 (React 19), Tailwind CSS v4, Framer Motion
 * **Backend:** Next.js API Routes, Supabase (PostgreSQL, Auth, Storage)
 * **Blockchain:** Algorand SDK (`algosdk`), `@txnlab/use-wallet-react`, PyTeal / TEAL smart contracts
 * **Integrations:** TrackingMore API (Courier Integration)
+* **Deployment:** Vercel (Edge Network)
 
 ---
 
@@ -91,20 +145,46 @@ TradeVault/
 │   │   ├── arbitrator/           # Arbitrator dashboard & views
 │   │   ├── dashboard/            # User deal management portal
 │   │   ├── deal/                 # Individual smart contract views
+│   │   ├── about/                # About TradeVault page
+│   │   ├── why-algorand/         # Why Algorand deep-dive page
 │   │   └── page.tsx              # Public landing page
 │   ├── components/               # Reusable React components
 │   │   ├── landing/              # Dedicated landing page sections
-│   │   ├── ui/                   # High-level UI elements
+│   │   ├── ui/                   # High-level UI elements (Navbar, etc.)
 │   │   └── *Client.tsx           # Client-side component logic
 │   ├── lib/                      # Core business logic & integrations
 │   │   ├── algorand.ts           # algodClient, indexer configs
 │   │   ├── supabase/             # Client & Admin auth instances
 │   │   └── tailwind-plugins.ts   # Custom CSS logic
 │   └── contracts/                # TEAL / PyTeal source code
-├── public/                       # Static assets (logo, icons)
+├── public/                       # Static assets (logo, icons, screenshots)
 ├── package.json                  # Project dependencies
 └── tailwind.config.ts            # Theme definitions (#189AB4, #05445E)
 ```
+
+---
+
+## ⛓️ On-Chain Smart Contract <a name="on-chain-smart-contract"></a>
+
+TradeVault's escrow logic is fully deployed on the **Algorand Testnet** and publicly verifiable by anyone. No trust required — you can audit every state transition directly on-chain.
+
+| Field | Value |
+|---|---|
+|  **Contract App ID** | `757509896` |
+|  **Contract App Address** | `HBVCO635I6V5YUD7CTCVS6WJRQX2GVYO2UJUIBSV63GUI24SNGTDYR66MY` |
+|  **Deployment TX ID** | `IW244OM3WL26FAY3DKNUZZHZ3ETJGWIVQHKXR6PCJRSUNMUFDAXQ` |
+|  **Platform Wallet** | `PA25V4WCVCLZCOSWAOM5Q7RV5G3JH2ELPHGZXCI7THU4A5UF6AVWIZIWWU` |
+|  **USDC Asset (ASA ID)** | `10458941` |
+|  **Network** | Algorand Testnet |
+
+###  Verify On-Chain (Algorand Lora Explorer)
+
+-  [**View Escrow Smart Contract →**](https://lora.algokit.io/testnet/application/757509896)
+-  [**View Deployment Transaction →**](https://lora.algokit.io/testnet/transaction/IW244OM3WL26FAY3DKNUZZHZ3ETJGWIVQHKXR6PCJRSUNMUFDAXQ)
+-  [**View USDC Asset (ASA 10458941) →**](https://lora.algokit.io/testnet/asset/10458941)
+-  [**View Platform Wallet →**](https://lora.algokit.io/testnet/account/PA25V4WCVCLZCOSWAOM5Q7RV5G3JH2ELPHGZXCI7THU4A5UF6AVWIZIWWU)
+
+> Every escrow deal creates a **new child application** derived from this master contract. Each child app ID is stored in the `contract_app_id` column of the deal in Supabase, and linked directly from the deal detail page so buyers and sellers can verify their specific escrow on-chain at any time.
 
 ---
 
@@ -174,6 +254,7 @@ const appCallTxn = algosdk.makeApplicationCallTxnFromObject({
   appIndex: escrowAppId,
   onComplete: algosdk.OnApplicationComplete.NoOpOC,
   appArgs: [new TextEncoder().encode('fund')],
+  foreignAssets: [USDC_ASSET_ID],
   suggestedParams: params,
 });
 
@@ -193,7 +274,7 @@ algosdk.assignGroupID([appCallTxn, usdcTransferTxn]);
 const signedTxns = await signTransactions([appCallTxn, usdcTransferTxn]);
 const { txid } = await algodClient.sendRawTransaction(signedTxns).do();
 
-// Wait for block confirmation
+// Wait for block confirmation (< 4 seconds on Algorand)
 await algosdk.waitForConfirmation(algodClient, txid, 4);
 ```
 
@@ -213,7 +294,11 @@ Building decentralized legal frameworks involves overcoming systemic barriers:
 
 ### 3. Oracles bridging "Real-World" Delivery Status
 * **Challenge:** Blockchains cannot intrinsically know if a physical item was delivered.
-* **Mitigation:** We utilize trusted backend oracles bridging carrier APIs (UPS, FedEx) to write tracking verification hashes to the blockchain. We also support "Instant Handover" cryptography involving QR-code scanning for in-person local deals.
+* **Mitigation:** We utilize trusted backend oracles bridging carrier APIs (UPS, FedEx, DHL) to write tracking verification hashes to the blockchain. We also support "Instant Handover" cryptography involving QR-code scanning for in-person local deals.
+
+### 4. AVM Foreign Asset & Account Access
+* **Challenge:** The Algorand Virtual Machine requires all foreign assets (e.g. USDC ASA ID) and foreign accounts (e.g. seller's wallet) to be explicitly declared in the outer transaction before inner transactions can reference them.
+* **Mitigation:** All contract calls include `foreignAssets: [USDC_ASSET_ID]` and `accounts: [sellerWallet]` in the transaction payload, ensuring the AVM has full context for every inner transfer it needs to execute.
 
 ---
 
@@ -225,7 +310,8 @@ Follow these instructions to run TradeVault locally on your machine.
 - [Node.js](https://nodejs.org/) (v18 or newer)
 - [Git](https://git-scm.com/)
 - A free [Supabase](https://supabase.com/) account for Database & Auth
-- An Algorand Testnet node or public API endpoints (e.g., AlgoNode)
+- An Algorand Testnet node or public API endpoints (e.g., [AlgoNode](https://algonode.io/))
+- A [Pera Wallet](https://perawallet.app/) or [Lute Wallet](https://lute.app/) for testing
 
 ### 1. Clone the repository
 ```bash
@@ -236,12 +322,10 @@ cd tradevault
 ### 2. Install dependencies
 ```bash
 npm install
-# or
-yarn install
 ```
 
 ### 3. Setup Environment Variables
-Create a `.env.local` file in the root directory and add the following keys. You will need to provision your Supabase project to obtain these:
+Create a `.env.local` file in the root directory and add the following keys:
 
 ```env
 # Supabase Configuration
@@ -252,17 +336,30 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 # App Environment
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# Tracking API (Optional for demo)
-TRACKINGMORE_API_KEY=your_trackingmore_api_key
+# Algorand
+ALGOD_SERVER=https://testnet-api.algonode.cloud
+ALGOD_TOKEN=
+ALGOD_PORT=443
+NEXT_PUBLIC_USDC_ASSET_ID=10458941
+
+# Platform server wallet (for automated contract calls)
+PLATFORM_MNEMONIC="your 25-word mnemonic here"
+PLATFORM_ADDRESS="your_algorand_address"
 ```
 
 ### 4. Run the Development Server
 ```bash
 npm run dev
-# or 
-yarn dev
 ```
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 5. Deploy to Production (Vercel)
+```bash
+npm i -g vercel
+vercel login
+vercel --prod
+```
+> ⚠️ Remember to add all environment variables in the **Vercel Dashboard → Settings → Environment Variables** and update `NEXT_PUBLIC_APP_URL` to your production URL.
 
 ---
 
@@ -273,7 +370,18 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 We would like to extend our deepest gratitude to:
 - **Algorand Foundation** for their robust documentation and developer tools.
 - **Supabase** for providing a seamless Web2 backend authentication infrastructure.
+- **Circle** for native USDC issuance on Algorand (ASA 10458941).
 - All Open Source contributors of `algosdk`, React, Next.js, and Lucide Icons.
 - Our amazing collaborators and beta-testers for their relentless feedback.
 
-Made with 🩵 by  *Team :-* **NOT SELECTED**
+Made with 🩵 by *Team:* **TradeVault Builders**
+
+---
+
+<div align="center">
+  <a href="https://securetradevault.vercel.app/">🌐 securetradevault.vercel.app</a>
+  &nbsp;·&nbsp;
+  Built on <strong>Algorand</strong>
+  &nbsp;·&nbsp;
+  Powered by <strong>USDC</strong>
+</div>
