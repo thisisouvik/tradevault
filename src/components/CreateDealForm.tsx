@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { PackagePlus, DollarSign, Clock, Mail, FileText, AlertCircle, CheckCircle2, Shield, AlertTriangle, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useWallet } from '@txnlab/use-wallet-react'
-import { algodClient } from '@/lib/algorand'
+import { algodClient, parseAlgorandError } from '@/lib/algorand'
 import algosdk from 'algosdk'
 
 export default function CreateDealForm() {
@@ -178,8 +178,7 @@ export default function CreateDealForm() {
       setTimeout(() => router.push(`/deal/${dealId}`), 4000)
 
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'An error occurred'
-      setError(msg)
+      setError(parseAlgorandError(err))
       setStep('form')
     }
   }

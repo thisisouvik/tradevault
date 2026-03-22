@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react'
 import { useWallet } from '@txnlab/use-wallet-react'
-import { algodClient, USDC_ASSET_ID } from '@/lib/algorand'
+import { algodClient, USDC_ASSET_ID, parseAlgorandError } from '@/lib/algorand'
 import algosdk from 'algosdk'
 
 interface ConfirmReceiptProps {
@@ -98,7 +98,7 @@ export function ConfirmReceipt({ dealId, appId, amountUSDC, buyerWallet, sellerW
       setDone(true)
       setTimeout(() => onSuccess(), 2000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Transaction failed')
+      setError(parseAlgorandError(err))
     } finally {
       setLoading(false)
     }

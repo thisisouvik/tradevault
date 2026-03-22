@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { AlertTriangle, AlertCircle } from 'lucide-react'
 import { useWallet } from '@txnlab/use-wallet-react'
-import { algodClient } from '@/lib/algorand'
+import { algodClient, parseAlgorandError } from '@/lib/algorand'
 import algosdk from 'algosdk'
 
 interface RaiseDisputeProps {
@@ -62,7 +62,7 @@ export function RaiseDispute({ dealId, appId, buyerWallet, onSuccess }: RaiseDis
 
       onSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Transaction failed')
+      setError(parseAlgorandError(err))
     } finally {
       setLoading(false)
     }

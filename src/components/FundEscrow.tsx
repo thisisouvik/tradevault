@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Wallet, Zap, AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useWallet } from '@txnlab/use-wallet-react'
-import { algodClient, USDC_ASSET_ID } from '@/lib/algorand'
+import { algodClient, USDC_ASSET_ID, parseAlgorandError } from '@/lib/algorand'
 import algosdk from 'algosdk'
 
 interface FundEscrowProps {
@@ -124,21 +124,11 @@ export function FundEscrow({ dealId, appId, appAddress, amountUSDC, buyerWallet,
       setDone(true)
       setTimeout(() => onSuccess(), 1500)
     } catch (err: any) {
-      console.error(err)
-      const msg = err?.message || 'Transaction failed'
-      // Translate low-level Algorand errors into user-friendly messages
-      if (msg.includes('underflow on subtracting')) {
-        setError('Insufficient USDC balance to cover this transaction.')
-      } else if (msg.includes('below min')) {
-        setError('Insufficient ALGO balance to cover transaction fees. You need at least 0.01 ALGO.')
-      } else if (msg.includes('must optin') || msg.includes('asset') && msg.includes('missing')) {
-        setError('The escrow contract is not activated yet. Please ask the seller to re-create this deal so it can be bootstrapped correctly.')
-      } else if (msg.includes('Only buyer can accept')) {
-        setError('Your connected wallet does not match the buyer address on this deal.')
-      } else if (msg.includes('rejected')) {
-        setError('Transaction was rejected in your wallet.')
-      } else {
-        setError(msg)
+      const msg = parseAlgorandError(err)
+      setError(msg)
+      // Check if the specific USDC underflow happened
+      if (msg.includes('USDC balance')) {
+        // We'll let the error UI handle it without a separate state if possible, though the original logic checking hasInsufficientBalance handles USDC balance preview.
       }
     } finally {
       setLoading(false)

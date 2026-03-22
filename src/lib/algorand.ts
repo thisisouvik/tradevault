@@ -81,6 +81,36 @@ export async function sha256(text: string): Promise<string> {
 }
 
 /**
+ * Parse raw Algorand errors into user-friendly UI messages
+ */
+export function parseAlgorandError(err: any): string {
+  const msg = err?.message || String(err)
+  
+  if (msg.includes('below min')) {
+    return 'Insufficient ALGO. Algorand requires an account minimum balance that goes up for every smart contract or asset you hold. Please fund your wallet using the Algorand Testnet Dispenser (bank.testnet.algorand.network) to continue.'
+  }
+  if (msg.includes('underflow on subtracting')) {
+    return 'Insufficient USDC balance to cover this transaction.'
+  }
+  if (msg.includes('must optin') || (msg.includes('asset') && msg.includes('missing'))) {
+    return 'Contract not activated. The buyer must wait for the seller to pay the setup fees before funding.'
+  }
+  if (msg.includes('Only buyer can')) {
+    return 'Permission denied: Your connected wallet does not match the buyer address assigned to this deal.'
+  }
+  if (msg.includes('Only seller can')) {
+    return 'Permission denied: Your connected wallet does not match the seller address assigned to this deal.'
+  }
+  if (msg.includes('rejected')) {
+    return 'Transaction was rejected or cancelled in your wallet.'
+  }
+  if (msg.includes('logic eval error: assert failed')) {
+    return 'Smart contract assertion failed. The current state does not allow this action.'
+  }
+  return msg
+}
+
+/**
  * Get platform server wallet from mnemonic
  */
 export function getPlatformWallet(): algosdk.Account {
