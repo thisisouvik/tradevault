@@ -2,10 +2,6 @@
   <img src="public/logo.png" alt="TradeVault Logo" width="120" />
   <h1>TradeVault</h1>
   <p><strong>From proposal to payment in 4 steps — Secure, Trustless, On-Chain Escrow.</strong></p>
-
-  <a href="https://securetradevault.vercel.app/" target="_blank">
-    <img src="https://img.shields.io/badge/🌐_Live_Site-securetradevault.vercel.app-05445E?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Site" />
-  </a>
   &nbsp;
   <img src="https://img.shields.io/badge/Blockchain-Algorand-189AB4?style=for-the-badge&logo=algorand&logoColor=white" alt="Algorand" />
   &nbsp;
@@ -16,7 +12,7 @@
 
 <br />
 
-> **🌐 Live Demo:** [https://securetradevault.vercel.app/](https://securetradevault.vercel.app/)
+> **🌐 Live Demo:** [TradeVault Website](https://securetradevault.vercel.app/)
 
 ---
 
@@ -27,7 +23,7 @@
 - [Why TradeVault? (Uniqueness)](#why-tradevault-uniqueness)
 - [Technical Architecture](#technical-architecture)
 - [File Structure (Clean Architecture)](#file-structure-clean-architecture)
-- [⛓️ On-Chain Smart Contract](#on-chain-smart-contract)
+- [On-Chain Smart Contract](#on-chain-smart-contract)
 - [User Workflow](#user-workflow)
 - [Logistics & Tracking Transparency](#logistics--tracking-transparency)
 - [Blockchain Integration](#blockchain-integration)
@@ -353,19 +349,9 @@ npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 5. Deploy to Production (Vercel)
-```bash
-npm i -g vercel
-vercel login
-vercel --prod
-```
-> ⚠️ Remember to add all environment variables in the **Vercel Dashboard → Settings → Environment Variables** and update `NEXT_PUBLIC_APP_URL` to your production URL.
-
 ---
 
 ## 🙌 Team & Acknowledgments <a name="team--acknowledgments"></a>
-
-**Team Name:** The TradeVault Builders
 
 We would like to extend our deepest gratitude to:
 - **Algorand Foundation** for their robust documentation and developer tools.
@@ -374,14 +360,6 @@ We would like to extend our deepest gratitude to:
 - All Open Source contributors of `algosdk`, React, Next.js, and Lucide Icons.
 - Our amazing collaborators and beta-testers for their relentless feedback.
 
-Made with 🩵 by *Team:* **TradeVault Builders**
+*Made with 🩵 by Team:* **Not Selected**
 
 ---
-
-<div align="center">
-  <a href="https://securetradevault.vercel.app/">🌐 securetradevault.vercel.app</a>
-  &nbsp;·&nbsp;
-  Built on <strong>Algorand</strong>
-  &nbsp;·&nbsp;
-  Powered by <strong>USDC</strong>
-</div>
